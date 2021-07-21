@@ -1,0 +1,616 @@
+\chapter{Протокол Record}\label{RECORD}
+
+\section{Общие сведения}\label{RECORD.1}
+
+Протокол Record получает данные для передачи, разбивает их на фрагменты,
+при необходимости сжимает, вычисляет имитовставку, зашифровывает и передает
+полученный результат. После получения данные расшифровываются, проверяется
+их целостность, при необходимости данные преобразуются из сжатой формы в
+исходную, объединяются и доставляются протоколам верхних уровней.
+
+Протокол Record используется протоколами Handshake, Change~Cipher~Spec и
+Alert, которые описываются в следующих разделах, а также прикладными
+протоколами. Каждый фрагмент данных при передаче протоколом Record
+дополняется полями, которые указывают на тип содержимого и длину фрагмента.
+
+Тип содержимого является элементом перечисления
+\begin{lstlisting}
+enum {
+  change_cipher_spec(20), alert(21), handshake(22),
+  application_data(23), (255)
+} ContentType;
+\end{lstlisting}
+
+Значения \lstinline{change_cipher_spec}, \lstinline{alert}, \lstinline{handshake}
+и \lstinline{application_data} указывают на то, что данные отправлены
+протоколами Change~Cipher~Spec, Alert, Handshake и прикладным
+протоколом соответственно.
+
+Перечисление \lstinline{ContentType} может быть расширено в будущем. Но пока 
+реализации TLS НЕ ДОЛЖНЫ посылать данные, типы содержимого которых отличны 
+от определенных выше. Если сторона TLS получает сообщение с содержимым 
+неопределенного типа, то она ДОЛЖНА выслать критическое сигнальное 
+сообщение \lstinline{unexpected_message} (см.~\ref{ALERT.3}). 
+
+Любой протокол, предназначенный для использования поверх TLS, должен быть 
+тщательно продуман на предмет защиты от возможных атак. Это значит, что 
+разработчик протокола верхнего уровня должен быть осведомлен о том, какие 
+механизмы безопасности поддерживает протокол TLS, а какие нет, и не 
+полагаться на последние. В частности, разработчик должен учитывать, что в 
+TLS тип содержимого и длина фрагмента не защищаются шифрованием. Поэтому, 
+если эти данные являются критическими, разработчику следует принять меры 
+для минимизации утечки информации при передаче (например, следует 
+дополнять фрагменты неиспользуемыми байтами или маскировать трафик). 
+
+\section {Состояния соединения}\label{RECORD.2}
+
+Логически соединение TLS описывается четырьмя состояниями: имеются текущие 
+(активные) состояния чтения и записи, а также ожидаемые состояния чтения и 
+записи. Состояние~--- это структура данных, которая определяет используемые 
+алгоритмы сжатия, шифрования и имитозащиты, а также состояния и параметры 
+этих алгоритмов. В том числе состояние определяет ключи шифрования и 
+имитозащиты, которые используются или будут использоваться для защиты 
+соединения в одном из направлений <<чтения или записи>>.  
+
+Протокол Record обрабатывает отправляемые данные с использованием текущего 
+состояния записи, а принимаемые~--- с использованием текущего состояния 
+чтения. Начальные текущие состояния устанавливаются пустыми. В этих 
+состояниях шифрование, сжатие и имитозащита не используются. Пустое 
+состояние соответствует криптонабору \lstinline{TLS_NULL_WITH_NULL_NULL}. 
+
+Состояния чтения и записи разделяют общие параметры защиты. Параметры 
+защиты для ожидаемых состояний устанавливаются протоколом Handshake. 
+Протокол Change Cipher Spec может переводить ожидаемое состояние в 
+текущее с переносом параметров защиты, при этом ранее установленное 
+текущее состояние заменяется ожидаемым, а ожидаемое состояние сбрасывается 
+в пустое. Если для состояния не установлены параметры защиты, то его 
+нельзя сделать текущим. 
+
+Параметры защиты описываются следующей структурой:
+\begin{lstlisting}
+struct {
+  ConnectionEnd          entity;
+  PRFAlgorithm           prf_algorithm;
+  BulkCipherAlgorithm    bulk_cipher_algorithm;
+  CipherType             cipher_type;
+  uint8                  enc_key_length;
+  uint8                  block_length;
+  uint8                  fixed_iv_length;
+  uint8                  record_iv_length;
+  MACAlgorithm           mac_algorithm;
+  uint8                  mac_length;
+  uint8                  mac_key_length;
+  CompressionMethod      compression_algorithm;
+  opaque                 master_secret[48];
+  opaque                 client_random[32];
+  opaque                 server_random[32];
+} SecurityParameters;
+\end{lstlisting}
+
+Поля структуры \lstinline{SecurityParameters} имеют следующее значение:
+\begin{itemize}
+\item[--] 
+\lstinline{entity}~--- сторона соединения (клиент или сервер);
+
+\item[--]
+\lstinline{prf_algorithm}~--- алгоритм генерации псевдослучайных чисел;
+
+\item[--]
+\lstinline{bulk_cipher_algorithm}~--- алгоритм шифрования (зашифрования 
+или расшифрования); 
+
+\item[--]
+\lstinline{cipher_type}~--- тип алгоритма шифрования;
+
+\item[--]
+\lstinline{enc_key_length}~--- длина ключа алгоритма шифрования; 
+
+\item[--]\lstinline{block_length}~--- длина блока алгоритма шифрования 
+(только для алгоритмов блочного шифрования);
+
+\item[--]\lstinline{fixed_iv_length}~--- длина неявной части 
+синхропосылки, используемой при шифровании; 
+
+\item[--]
+\lstinline{record_iv_length}~--- длина явной части синхропосылки, 
+используемой при шифровании; 
+
+\item[--]
+\lstinline{mac_algorithm}~--- алгоритм имитозащиты; 
+
+\item[--]
+\lstinline{mac_length}~--- длина имитовставки алгоритма имитозащиты;
+
+\item[--]
+\lstinline{mac_key_length}~--- длина ключа алгоритма имитозащиты;
+
+\item[--]
+\lstinline{compression_algorithm}~--- алгоритм, который используется для 
+сжатия данных; 
+
+\item[--]
+\lstinline{master_secret}~--- мастер-ключ, который является общим для двух 
+сторон соединения;  
+ 
+\item[--]
+\lstinline{client_random}~--- случайное число клиента;
+
+\item[--]
+\lstinline{server_random}~--- случайное число сервера.
+\end{itemize}
+
+Используемые в \lstinline{SecurityParameters} типы 
+\lstinline{PRFAlgorithm}, \lstinline{BulkCipherAlgorithm}, 
+\lstinline{CipherType}, \lstinline{MACAlgorithm} описаны выше. Оставшиеся 
+типы определяются следующим образом: 
+\begin{lstlisting}
+enum {server, client} ConnectionEnd;
+enum {null(0), (255)} CompressionMethod;
+\end{lstlisting}
+
+Элементы \lstinline{server} и \lstinline{client} перечисления 
+\lstinline{ConnectionEnd} соответствуют серверу и клиенту. Элемент 
+\lstinline{null} перечисления CompressionMethod соответствует <<пустому>> 
+алгоритму сжатия, который не изменяет поступающие на его вход данные. 
+
+Протокол Record использует параметры защиты для формирования следующих объектов:
+\begin{itemize}
+\item[--]
+\lstinline{client_write_MAC_key}~--- ключ имитозащиты клиента;
+
+\item[--]
+\lstinline{server_write_MAC_key}~--- ключ имитозащиты сервера;
+
+\item[--]
+\lstinline{client_write_key}~--- ключ шифрования клиента;
+
+\item[--]
+\lstinline{server_write_key}~--- ключ шифрования сервера;
+
+\item[--]
+\lstinline{client_write_IV}~--- неявная часть синхропосылки клиента;
+
+\item[--]
+\lstinline{server_write_IV}~--- неявная часть синхропосылки сервера.
+\end{itemize}
+                                                            
+Объекты строятся по параметрам защиты с помощью алгоритма, определенного 
+в~\ref{CRYPTO.2.3}. Не все объекты могут быть задействованы и поэтому 
+некоторые из них могут быть пустыми. Ключи и синхропосылки клиента 
+используются клиентом при отправке данных, а сервером при получении 
+данных, и наоборот.  
+
+После того, как параметры защиты согласованы, необходимые ключи и 
+синхропосылки построены, ожидаемые состояния соединения могут быть 
+переведены в текущие. Смена состояний ДОЛЖНА быть учтена при обработке 
+всех следующих фрагментов данных. 
+
+Каждое состояние соединения включает следующие элементы:
+\begin{itemize}
+\item[--] 
+состояние алгоритма сжатия;
+
+\item[--] 
+состояние алгоритма шифрования, в том числе ключ шифрования для данного 
+соединения. Для алгоритма поточного шифрования в этом состоянии сохраняется 
+вся информация, необходимая для продолжения шифрования следующих фрагментов 
+данных; 
+
+\item[--]
+состояние алгоритма имитозащиты, в том числе ключ имитозащиты;
+
+\item[--]
+порядковый номер \lstinline{seq_num}.
+\end{itemize}
+
+Для состояний чтения и записи должны поддерживаться независимые порядковые 
+номера. Порядковый номер ДОЛЖЕН сбрасываться в 0 всякий раз, когда 
+состояние соединения становится текущим, и увеличиваться на единицу после 
+обработки (передачи или приема) каждого фрагмента данных. Порядковый 
+номер является числом типа \mbox{\lstinline{uint64}~и} не может превышать 
+значения $2^{64}-1$. Порядковые номера не должны повторяться. Поэтому при 
+достижении максимального порядкового номера реализации TLS должны 
+переустанавливать соединение. 
+
+\section{Выполнение протокола}\label{RECORD.3}
+
+\subsection{Фрагментация}\label{RECORD.3.1}
+
+Протокол Record принимает неструктурированные данные от протоколов 
+верхнего уровня непустыми блоками произвольной длины. Протокол 
+преобразует блоки в структуры типа \lstinline{TLSPlaintext}, содержащие фрагменты из 
+не более чем $2^{14}$ байтов. Протокол Record не обязательно сохраняет размер 
+поступающих блоков, т. е. несколько блоков данных, полученных от одного и 
+того же протокола верхнего уровня, МОГУТ быть объединены в один фрагмент, 
+или, наоборот, один блок МОЖЕТ быть разбит на несколько фрагментов. 
+Тип \lstinline{TLSPlaintext} определяется следующим образом:
+\begin{lstlisting}
+struct {
+  ContentType type;
+  ProtocolVersion version;
+  uint16 length;
+  opaque fragment[TLSPlaintext.length];
+} TLSPlaintext;
+\end{lstlisting}
+
+Поля структуры \lstinline{TLSPlaintext} имеют следующее значение:
+\begin{itemize}
+\item[--]
+\lstinline{type}~--- тип содержимого передаваемых данных (см.~\ref{RECORD.1});
+
+\item[--]
+\lstinline{version}~--- используемая версия TLS;
+
+\item[--]
+\lstinline{length}~--- длина в байтах поля 
+\lstinline{TLSPlaintext.fragment}. Длина НЕ ДОЛЖНА быть больше $2^{14}$; 
+
+\item[--]
+\lstinline{fragment}~--- фрагмент данных от протокола верхнего уровня, 
+заданного полем \lstinline{TLSPlaintext.type}. 
+\end{itemize}
+
+Тип \lstinline{ProtocolVersion} определяется следующим образом:
+\begin{lstlisting}
+struct {
+  uint8 major;
+  uint8 minor;
+} ProtocolVersion;
+\end{lstlisting}
+
+Поля \lstinline{major} и \lstinline{minor} задают старшую и младшую части 
+номера версии протокола. Настоящий стандарт определяет протокол TLS версии 
+1.2, которому соответствует значение \lstinline|{3, 3}|. 
+
+Реализации TLS НЕ ДОЛЖНЫ посылать фрагменты нулевой длины с типом 
+содержимого \lstinline{change_cipher_spec}, \lstinline{alert} и 
+\lstinline{handshake}. Фрагменты нулевой длины с типом содержимого 
+\lstinline{application_data} МОГУТ высылаться, например, для  
+анализа помех в канале связи. 
+
+Фрагменты с различными типами содержимого МОГУТ чередоваться. Фрагменты 
+прикладных протоколов, как правило, имеют более низкий приоритет для 
+передачи по сравнению с фрагментами других типов. Тем не менее фрагменты 
+ДОЛЖНЫ доставляться на сетевой уровень в том же порядке, в каком к ним 
+применялась защита протоколом Record. Если сторона получает фрагмент 
+прикладного протокола во время выполнения Handshake, то этот фрагмент 
+ДОЛЖЕН обрабатываться с использованием параметров защиты, установленных по 
+завершении предыдущего сеанса Handshake. 
+                                                      
+\subsection {Сжатие и восстановление сжатых данных}\label{RECORD.3.2} 
+
+Все фрагменты сжимаются с помощью алгоритма сжатия, определенного в 
+текущем состоянии сеанса. Всегда существует активный алгоритм сжатия. 
+Первоначально он определяется как <<пустой>> и задается идентификатором 
+\lstinline{CompressionMethod.null}.  
+Алгоритм сжатия преобразует структуру типа \lstinline{TLSPlaintext} в 
+структуру типа \lstinline{TLSCompressed}:
+\begin{lstlisting}
+struct {
+  ContentType type;
+  ProtocolVersion version;
+  uint16 length;
+  opaque fragment[TLSCompressed.length];
+} TLSCompressed;
+\end{lstlisting}
+
+Поля структуры \lstinline{TLSCompressed} имеют следующее значение:
+\begin{itemize}
+\item[--]
+\lstinline{type}~--- поле, аналогичное \lstinline{TLSPlaintext.type};
+
+\item[--]
+\lstinline{version}~--- поле, аналогичное \lstinline{TLSPlaintext.version};
+
+\item[--]
+\lstinline{length}~--- длина в байтах поля 
+\lstinline{TLSCompressed.fragment}. Длина НЕ ДОЛЖНА быть больше, чем 
+$2^{14} + 1024$; 
+\item[--]
+\lstinline{fragment}~--- cжатое поле \lstinline{TLSPlaintext.fragment}.
+\end{itemize}
+
+Состояние алгоритма сжатия инициализируются значениями по умолчанию в тот 
+момент, когда состояние соединения становится активным. 
+
+Сжатие должно выполняться без потери информации. При сжатии длина 
+содержимого не может увеличиваться (за счет дополнительных заголовков, 
+таблиц сжатия и др.) более чем на 1024 байтов. Если объем данных, 
+восстановленных из \lstinline{TLSCompressed.fragment}, превысит $2^{14}$ 
+байтов, то ДОЛЖНО быть отправлено критическое сигнальное сообщение 
+\lstinline{decompression_failure} (см.~\ref{ALERT.3}). 
+
+Восстановление сжатых данных ДОЛЖНО быть реализовано так, чтобы 
+восстановление не могло привести к переполнению внутренних буферов памяти. 
+
+\begin{note}
+Примечание 1~--- Некоторые алгоритмы сжатия для TLS приводятся в~\cite{RFC3749}. 
+\end{note}
+
+\begin{note}
+Примечание 2~--- Известны атаки на прикладные протоколы, в которых 
+злоумышленник знает формат фрагмента открытых данных и даже частично 
+управляет его содержимым. Злоумышленник использует уровень сжатия (разницу 
+между \lstinline{TLSPlaintext.length} и \lstinline{TLSCompressed.length}) 
+для определения недостающих частей фрагмента. Следует учитывать 
+возможность таких атак при проектировании пакетов прикладных протоколов и 
+планировании сжатия в TLS. 
+\end{note}
+ 
+\subsection{Защита данных}\label{RECORD.3.3}
+    
+Алгоритмы зашифрования и имитозащиты преобразуют структуру типа 
+\lstinline{TLSCompressed} в структуру типа \lstinline{TLSCiphertext}. 
+Алгоритм расшифрования выполняет обратный процесс. 
+
+Тип \lstinline{TLSCiphertext} определяется следующим образом:
+\begin{lstlisting}
+struct {
+  ContentType type;
+  ProtocolVersion version;
+  uint16 length;
+  select (SecurityParameters.cipher_type) {
+    case stream: GenericStreamCipher;
+    case block:  GenericBlockCipher;
+    case aead:   GenericAEADCipher;
+  } fragment;
+} TLSCiphertext;
+\end{lstlisting}
+ 
+Поля структуры \lstinline{TLSCiphertext} имеют следующее значение:
+\begin{enumerate} 
+\item[--]
+\lstinline{type}~--- поле, аналогичное \lstinline{TLSCompressed.type};
+
+\item[--]
+\lstinline{version}~--- поле, аналогичное \lstinline{TLSCompressed.version};
+
+\item[--]
+\lstinline{length}~--- длина в байтах поля 
+\lstinline{TLSCiphertext.fragment}. Длина не должна быть больше, чем 
+$2^{14} + 2048$; 
+
+\item[--]
+\lstinline{fragment}~--- зашифрованное поле 
+\lstinline{TLSCompressed.fragment} вместе с имитовставкой. 
+\end{enumerate}
+                
+\subsubsection {Поточное шифрование}\label{RECORD.3.3.1}
+
+Алгоритмы поточного шифрования преобразуют структуру 
+\lstinline{TLSCompressed.fragment} в структуру 
+\lstinline{TLSCiphertext.fragment} типа \lstinline{GenericStreamCipher} и 
+наоборот.   
+
+Тип \lstinline{GenericStreamCipher} определяется следующим образом:
+\begin{lstlisting}
+stream-ciphered struct {
+  opaque content[TLSCompressed.length];
+  opaque MAC[SecurityParameters.mac_length];
+} GenericStreamCipher;
+\end{lstlisting}
+
+Поля структуры TLSCompressed имеют следующее значение:
+\begin{itemize}
+\item[--] 
+\lstinline{content}~--- поле, аналогичное 
+\lstinline{TLSCiphertext.fragment}; 
+
+\item[--]
+\lstinline{MAC}~--- имитовставка, вычисленная с помощью алгоритма, 
+заданного полем \lstinline{SecurityParameters.mac_algorithm}. 
+\end{itemize}
+
+Имитовставка вычисляется на ключе имитозащиты от составной строки 
+\begin{lstlisting}
+seq_num + TLSCompressed.type + TLSCompressed.version + 
+  TLSCompressed.length + TLSCompressed.fragment, 
+\end{lstlisting}
+где \lstinline{seq_num}~--- порядковый номер фрагмента. Имитовставка 
+вычисляется до зашифрования отправляемого фрагмента и после расшифрования 
+принятого.  
+
+Зашифровывается составная строка \lstinline{content + mac}. Длина 
+\lstinline{TLSCiphertext.length}  равна сумме значений полей 
+\lstinline{TLSCompressed.length} и  \lstinline{SecurityParameters.mac_length}.  
+
+\subsubsection{Блочное шифрование}\label{RECORD.3.3.2} 
+
+Алгоритмы блочного шифрования используются в режиме сцепления блоков. 
+Они преобразуют структуру \lstinline{TLSCompressed.fragment} в структуру 
+\lstinline{TLSCiphertext.fragment} типа \lstinline{GenericBlockCipher} 
+и наоборот. 
+
+Тип \lstinline{GenericBlockCipher} определяется следующим образом:
+\begin{lstlisting}
+struct {
+  opaque IV[SecurityParameters.record_iv_length];
+  block-ciphered struct {
+    opaque content[TLSCompressed.length];
+    opaque MAC[SecurityParameters.mac_length];
+    uint8 padding[GenericBlockCipher.padding_length];
+    uint8 padding_length;
+  };
+} GenericBlockCipher;
+\end{lstlisting}
+
+Поля структуры \lstinline{GenericBlockCipher} имеют следующее значение:
+\begin{itemize}
+\item[--]
+\lstinline{IV}~--- синхропосылка, которую СЛЕДУЕТ выбирать случайно и которая ДОЛЖНА 
+быть непредсказуемой. Для алгоритмов блочного шифрования длина 
+синхропосылки определяется полем \lstinline{SecurityParameters.record_iv_length}, 
+значение которого ДОЛЖНО совпадать со значением 
+поля~\lstinline{SecurityParameters.block_size}; 
+
+\item[--] 
+\lstinline{content}~--- поле, аналогичное \lstinline{TLSCompressed.fragment};
+
+\item[--]
+\lstinline{MAC}~--- имитовставка, которая вычисляется в соответствии 
+с~\ref{RECORD.3.3.1};
+
+\item[--]
+\lstinline{padding}~--- дополнение, которое добавляется к открытым данным для 
+выравнивания их на границу блока алгоритма шифрования. Дополнение МОЖЕТ 
+быть любой длины, не превосходящей 255, при этом длина дополнения ДОЛЖНА 
+выбираться так, чтобы значение поля \lstinline{TLSCiphertext.length} 
+(т.~е. размер структуры типа \lstinline{GenericBlockCipher}) было кратно 
+длине блока алгоритма шифрования. Дополнения, размеры которых больше 
+минимально необходимых, могут использоваться для предотвращения атак, 
+основанных на анализе длин передаваемых сообщений. Каждый байт дополнения 
+ДОЛЖЕН быть заполнен значением длины дополнения. Получатель ДОЛЖЕН 
+проверить дополнение и ДОЛЖЕН отправить критическое сигнальное сообщение 
+\lstinline{bad_record_mac} (см.~\ref{ALERT.3}), если дополнение 
+некорректно;
+
+\item[--]
+\lstinline{padding_length}~--- длина дополнения в байтах. Может принимать 
+значения от 0 до 255 включительно.  
+\end{itemize}
+
+При блочном шифровании значение поля \lstinline{TLSCiphertext.length} на 
+единицу больше, чем сумма значений полей 
+\lstinline{SecurityParameters.block_length},  
+\lstinline{TLSCompressed.length}, 
+\lstinline{SecurityParameters.mac_length} и \lstinline{padding_length}.  
+
+\begin{example}
+Пример~--- Пусть длина блока (в байтах) алгоритма шифрования равна 8, 
+длина содержимого (\lstinline{TLSCompressed.length}) равна 61, 
+а длина имитовставки~--- 20. 
+Тогда суммарная длина полей \lstinline{content}, \lstinline{MAC}, 
+\lstinline{padding_length} равняется 82. Для того, чтобы общая длина 
+зашифровываемых данных была кратна длине блока, необходимо выбрать 
+дополнение, длина которого должна принимать одно из следующих значений: 6, 
+14, 22, \ldots, 254. Дополнение минимальной длины будет  
+состоять из 6 байтов, каждый из которых содержит значение 6. Таким 
+образом, последние 8 байтов структуры \lstinline{GenericBlockCipher} до их 
+зашифрования будут иметь следующий вид: XX 06 06 06 06 06 06 06, где XX~--- 
+последний байт имитовставки (поле MAC).
+\end{example}
+
+\begin{note}
+Примечание 1~--- При шифровании в режиме сцепления блоков весь фрагмент 
+открытого текста ДОЛЖЕН быть известен до передачи какой-либо части 
+соответствующего шифртекста.
+\end{note}
+
+\begin{note}
+Примечание 2~--- В \cite{PwdInterception} описана атака на механизм 
+дополнения данных перед зашифрованием, основанная на замерах времени 
+вычисления имитовставки расшифрованных данных. Для защиты от данной атаки 
+реализации ДОЛЖНЫ обрабатывать зашифрованные фрагменты данных за одно и то 
+же время, вне зависимости от того, какое дополнение получено при 
+расшифровании, корректное или нет. Для этого рекомендуется вычислять 
+имитовставку даже в том случае, когда дополнение некорректно, и только 
+после этого браковать фрагмент. Для защиты от атаки, предложенной в~\cite{Lucky13}, 
+рекомендуется и при корректном, и при некрректном дополнении вычислять 
+имитовставку за максимальное время. Это время, за которые были бы 
+выполнены вычисления, если бы дополнение имело нулевую длину. 
+\end{note}
+
+\subsubsection{Одновременное шифрование и имитозащита}\label{RECORD.3.3.3}
+
+Алгоритм установки защиты преобразует структуру 
+\lstinline{TLSCompressed.fragment} в структуру 
+\lstinline{TLSCiphertext.fragment} типа \lstinline{GenericAEADCipher}, а 
+алгоритм снятия защиты выполняет обратное преобразование. 
+
+Тип \lstinline{GenericAEADCipher} определяется следующим образом:
+\begin{lstlisting}
+struct {
+  opaque nonce_explicit[SecurityParameters.record_iv_length];
+  aead-ciphered struct {
+    opaque content[TLSCompressed.length];
+  };
+} GenericAEADCipher;
+\end{lstlisting}
+
+При установке защиты клиент использует ключ шифрования \lstinline{client_write_key}, 
+а сервер~--- \lstinline{server_write_key}. Ключи имитозащиты не используются. 
+Каждый криптонабор, поддерживающий алгоритмы одновременного шифрования и 
+имитозащиты, ДОЛЖЕН определять, каким образом формируется синхропосылка. 
+
+Синхропосылка состоит из двух частей~--- явной, которая передается вместе с 
+фрагментами данных, и неявной, которая определяется по параметрам защиты 
+и не передается вместе с данными.   
+
+Явная часть синхропосылки размещается в поле 
+\lstinline{GenericAEAEDCipher.nonce_explicit}. Неявную часть СЛЕДУЕТ 
+определять по строке \lstinline{client_write_iv} (при отправке данных 
+клиентом) или \lstinline{server_write_iv} (при отправке данных сервером). 
+Формирование этих строк описывается в~\ref{RECORD.4}.  
+
+Критическими данными алгоритмов одновременного шифрования и имитозащиты 
+является поле \lstinline{TLSCompressed.fragment}. Дополнительные открытые 
+данные, обозначаемые \lstinline{additional_data}, определяются следующим 
+образом:
+\begin{lstlisting}
+additional_data = seq_num + TLSCompressed.type + 
+  TLSCompressed.version + TLSCompressed.length,
+\end{lstlisting}
+где \lstinline{seq_num}~--- порядковый номер фрагмента.
+
+Длина выходных данных алгоритма установки защиты, как правило, больше, чем 
+длина критических данных (т.~е. больше значения поля 
+\lstinline{TLSCompressed.length}). Увеличение длины определяется спецификой 
+используемого алгоритма. Так как алгоритмы одновременного шифрования и 
+имитозащиты могут включать в себя механизмы выравнивания данных на 
+границу блока, длина выходных данных алгоритма установки защиты может 
+меняться в зависимости от значения поля \lstinline{TLSCompressed.length}. 
+При установке защиты длина критических данных НЕ ДОЛЖНА увеличиваться 
+более чем на 1024 байтов. 
+
+Если при обработке данных алгоритм снятия защиты возвратил признак 
+нарушения целостности данных, то ДОЛЖНО быть отправлено критическое 
+сигнальное сообщение \lstinline{bad_record_mac} (см.~\ref{ALERT.3}). 
+
+\section{Формирование ключей}\label{RECORD.4}
+
+Протокол Record использует алгоритм генерации псевдослучайных чисел для 
+формирования ключей текущего состояния соединения. С помощью этого 
+алгоритма могут также формироваться синхропосылки алгоритмов 
+одновременного шифрования и имитозащиты. 
+
+При генерации используются параметры защиты (см.~\ref{RECORD.2}), выработанные 
+сторонами по протоколу Handshake. По мастер-ключу и случайным данным 
+клиента и сервера генерируется строка байтов \lstinline{key_block}: 
+\begin{lstlisting}
+key_block = PRF(SecurityParameters.master_secret, 
+  "key expansion", SecurityParameters.server_random + 
+     SecurityParameters.client_random);
+\end{lstlisting}
+
+Ключи и синхропосылки формируются по этой строке в следующем порядке 
+(объекты нулевой длины считаются пустыми): 
+\begin{itemize}
+\item[--] 
+ключ \lstinline{client_write_MAC_key} длины 
+\lstinline{SecurityParameters.mac_key_length}; 
+
+\item[--]
+ключ \lstinline{server_write_MAC_key} длины 
+\lstinline{SecurityParameters.mac_key_length}; 
+
+\item[--]
+ключ \lstinline{client_write_key} длины 
+\lstinline{SecurityParameters.enc_key_length}; 
+
+\item[--]
+ключ \lstinline{server_write_key} длины 
+\lstinline{SecurityParameters.enc_key_length}; 
+
+\item[--]
+синхропосылка \lstinline{client_write_IV} длины 
+\lstinline{SecurityParameters.fixed_iv_length}; 
+
+\item[--]
+синхропосылка \lstinline{server_write_IV} длины 
+\lstinline{SecurityParameters.fixed_iv_length}. 
+\end{itemize}
+
+Генерируется столько байтов \lstinline{key_block}, сколько требуется для 
+построения всех ключей и синхропосылок. 
+
+

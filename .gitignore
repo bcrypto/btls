@@ -1,0 +1,22 @@
+# TeX files
+*.aux
+*.idx
+*.log
+*.out
+*.thm
+*.toc
+*.dvi
+
+# Graphic files
+*.eps
+*.cdr
+
+# Tmp files
+~*.*
+*.bak
+*.backup
+
+# Specific files
+support
+spec/*.pdf
+clear.cmd

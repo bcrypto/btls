@@ -1,0 +1,126 @@
+\clearpage
+\chapter*{\mbox{}\hfill Поправка к официальной редакции\hfill\mbox{}}
+
+\mbox{}
+
+\begin{center}
+\begin{tabular}{|p{3.5cm}|p{6cm}|p{6cm}|}
+\hline
+В каком месте & Напечатано & Должно быть\\
+\hline
+\hline
+Приложение~\ref{BSUITES},\par
+таблица~\ref{Table.BSUITES.1},\par
+вторая колонка
+&
+\{192, 21\}\par
+\{192, 22\}\par
+\{192, 23\}\par
+\{192, 24\}\par
+\{192, 25\}\par
+\{192, 26\}\par
+\{192, 27\}\par
+\{192, 28\}
+&
+\{255, 21\}\par
+\{255, 22\}\par
+\{255, 23\}\par
+\{255, 24\}\par
+\{255, 25\}\par
+\{255, 26\}\par
+\{255, 27\}\par
+\{255, 28\}
+\\
+\hline
+Приложение~\ref{BSUITES},\par
+пункт~\ref{BSUITES.1},\par
+последний абзац
+&
+Во всех криптонаборах используется один и тот же алгоритм генерации
+псевдослучайных чисел (см.~В.2.4). Отличаются алгоритмы шифрования (см.~В.2.1),
+алгоритмы имитозащиты (см.~В.2.2) и алгоритмы формирования общего ключа
+(см.~В.2.5). Алгоритмы шифрования и имитозащиты могут быть совмещены
+(см.~В.2.3).
+&
+Во всех криптонаборах используется один и тот же алгоритм генерации
+псевдослучайных чисел (см.~\ref{BSUITES.2.2}). Отличаются алгоритмы шифрования и
+имитозащиты (см.~\ref{BSUITES.2.1}), алгоритмы формирования общего ключа
+(см.~\ref{BSUITES.2.3}).
+\\
+\hline
+\multirow{3}{*}{\shortstack[l]{
+Приложение~\ref{BSUITES},\\
+пункт~\ref{BSUITES.2},\\[3pt]
+заголовки}}
+&
+В.2.3~Одновременное шифрование и имитозащита
+&
+В.2.1.3~Одновременное шифрование и имитозащита
+\\
+\cline{2-3}
+&
+В.2.4~Алгоритм генерации псевдослучайных чисел
+&
+В.2.2~Алгоритм генерации псевдослучайных чисел
+\\
+\cline{2-3}
+&
+В.2.5~Алгоритмы формирования общего ключа
+&
+В.2.3~Алгоритмы формирования общего ключа
+\\
+\cline{2-3}
+&
+В.2.5.1~Алгоритм DHE\_BIGN
+&
+В.2.3.1~Алгоритм DHE\_BIGN
+\\
+\cline{2-3}
+&
+В.2.5.2~Алгоритм DHT\_BIGN
+&
+В.2.3.2~Алгоритм DHT\_BIGN
+\\
+\cline{2-3}
+&
+В.2.5.3~Алгоритм\par DHE\_PSK\_BIGN
+&
+В.2.3.3~Алгоритм\par DHE\_PSK\_BIGN
+\\
+\cline{2-3}
+&
+В.2.5.4~Алгоритм\par DHT\_PSK\_BIGN
+&
+В.2.3.4~Алгоритм\par DHT\_PSK\_BIGN
+\\
+\hline
+Приложение~\ref{BSUITES},\par
+пункт~\ref{BSUITES.3.2} 
+&
+\lstinline|ClientCertificateType +=|\par
+\lstinline| {bign128_auth(121),|\par
+\lstinline|  bign192_auth(122),|\par
+\lstinline|  bign256_auth(123)};|
+&
+\lstinline|ClientCertificateType +=|\par
+\lstinline| {bign128_auth(231),|\par
+\lstinline|  bign192_auth(232),|\par
+\lstinline|  bign256_auth(233)};|
+\\
+\hline
+Приложение~\ref{BSUITES},\par
+пункт~\ref{BSUITES.3.3} 
+&
+\lstinline|HashAlgorithm +=|\par
+\lstinline| {belt_hash(121)};|\par
+\lstinline|SignatureAlgorithm +=|\par
+\lstinline| {bign_sign(121)};|
+&
+\lstinline|HashAlgorithm +=|\par
+\lstinline| {belt_hash(231)};|\par
+\lstinline|SignatureAlgorithm +=|\par
+\lstinline| {bign_sign(231)};|
+\\
+\hline
+\end{tabular}
+\end{center}
