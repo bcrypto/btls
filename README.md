@@ -1,5 +1,7 @@
 # Btls: The Transport Layer Security Protocol
 
+![](figs/btls-logo-small.png)
+
 [![build](https://github.com/bcrypto/btls/actions/workflows/build.yaml/badge.svg)](https://github.com/bcrypto/btls/actions/workflows/build.yaml)
 
 ## What is Btls?
