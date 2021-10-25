@@ -22,7 +22,7 @@ jobs:
           pwd
           cd server
           pwd
-          docker-compose build -f /docker-compose.yml --pull
+          docker-compose -f /docker-compose.yml build --pull
           docker-compose push
 
 #        name: Push to DockerHub
