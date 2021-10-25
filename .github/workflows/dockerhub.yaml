@@ -19,7 +19,6 @@ jobs:
 
       - name: Set up docker-compose
         run: |
-          cd server
           docker-compose build -f ./server/docker-compose.yml --pull
           docker-compose push
 
