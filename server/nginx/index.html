@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to BTLS!</title>
+<style>
+    body {
+      font-family: Arial;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    form.example input[type=text] {
+      padding: 10px;
+      font-size: 17px;
+      border: 1px solid grey;
+      float: left;
+      width: 80%;
+      background: #f1f1f1;
+    }
+    
+    form.example input[type=button] {
+      float: left;
+      width: 20%;
+      padding: 10px;
+      background: #2196F3;
+      color: white;
+      font-size: 17px;
+      border: 1px solid grey;
+      border-left: none;
+      cursor: pointer;
+    }
+    
+    form.example input[type=button] {
+      background: #0b7dda;
+    }
+    
+    form.example::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+</style>
+
+</head>
+<body>
+<h1>Welcome to BTLS!</h1>
+<h2>Search Button</h2>
+
+<p>Server:</p>
+
+<script type="text/javascript">
+  function redirect_()
+  {
+    var url = 'https://127.0.0.1:443/check_server?test=' + document.getElementById('server_').value;
+    location.href =url;
+  }
+</script>
+
+<form class="example" method="GET">
+  <input type="text" id="server_" value="">
+  <input type="button" value="Test" OnClick="redirect_()"/>
+</form>
+
+
+</body>
+</html>

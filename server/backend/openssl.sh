@@ -36,9 +36,6 @@ make -j${nproc}
 make install
 echo "export LD_LIBRARY_PATH="${PREFIX}/lib:${LD_LIBRARY_PATH:-}"" >> ${HOME}/.bashrc
 echo "export PATH=${PREFIX}/bin:${PATH}" >> ${HOME}/.bashrc
-echo ${PREFIX}
-echo ${PATH}
-echo ${LD_LIBRARY_PATH}
 ls ${PREFIX}/lib
 ls ${PREFIX}/bin
 cp -a ../test/. .

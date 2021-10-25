@@ -1,0 +1,58 @@
+version: '3'
+services:
+  nginx:
+    build:
+      context: ./nginx
+    image: nginx-btls
+    container_name: nginx-btls
+    depends_on:
+      - flask
+    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
+    # директории ./backend, появятся в директории контейнера /backend
+    volumes:
+      - ./:/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+      - "444:444"
+      - "445:445"
+    command: tail -F anything
+    networks:
+      back:
+        aliases:
+          - nginx
+  flask:
+    # Путь до Dockerfile
+    build: ./backend
+    image: flask:0.0.1
+   # Имя для создаваемого контейнера
+    container_name: flask
+#    depends_on:
+#      - nginx
+    # Создание переменных окружения в контейнере
+    volumes:
+      - ./backend:/backend
+    environment:
+      - FLASK_APP=/backend/app.py
+      # для отладки (при запуске в релиз убрать!)
+      - FLASK_ENV=development
+      ## Позволяет отслеживать процесс работы приложения в командной строке
+      - PYTHONUNBUFFERED=True                   
+      ##
+    # Перезапускаем сервис в случае падения 
+    restart: on-failure
+    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
+    # директории ./backend, появятся в директории контейнера /backend
+    # Открываем порт в контейнер
+    # Порт, который будет смотреть наружу : порт который используется внутри контейнера
+    command: tail -F anything # flask run --host=0.0.0.0 --port=5000
+    ports:
+      - "8080:5000"
+    networks:
+      back:
+        aliases:
+          - flask-app
+
+networks:
+  back:
+    driver: bridge
