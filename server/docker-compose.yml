@@ -3,7 +3,7 @@ services:
   nginx:
     build:
       context: ./nginx
-    image: nginx-btls
+    image: btls/nginx-btls
     container_name: nginx-btls
     depends_on:
       - flask
@@ -24,7 +24,7 @@ services:
   flask:
     # Путь до Dockerfile
     build: ./backend
-    image: flask:0.0.1
+    image: btls/flask
    # Имя для создаваемого контейнера
     container_name: flask
 #    depends_on:
