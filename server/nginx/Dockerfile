@@ -17,7 +17,6 @@ RUN apt-get install -y -q \
 COPY ./openssl.sh ./
 COPY ./nginx.sh ./
 COPY ./index.html /etc/nginx/html/index.html
-COPY ./check_server.html /etc/nginx/html/check_server.html
 RUN mkdir /etc/nginx/ssl_psk_path
 COPY ./priv512.key /etc/nginx/ssl/priv512.key
 COPY ./cert512.pem /etc/nginx/ssl/cert512.pem
