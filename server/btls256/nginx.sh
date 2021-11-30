@@ -1,4 +1,4 @@
-wget ftp://ftp.pcre.org/pub/pcre/pcre-8.45.tar.gz
+wget https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.gz
 tar -zxf pcre-8.45.tar.gz
 cd pcre-8.45
 ./configure

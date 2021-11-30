@@ -1,5 +1,6 @@
 FROM ubuntu:20.04
 
+RUN apt-get clean 
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install cmake -y -q
 
@@ -11,21 +12,14 @@ RUN apt-get install -y -q \
 	nano \
 	iptables \
 	build-essential \
-	php7.4-fpm \
 	patch
 
 COPY ./openssl.sh ./
 COPY ./nginx.sh ./
 COPY ./index.html /etc/nginx/html/index.html
-RUN mkdir /etc/nginx/ssl_psk_path
-COPY ./priv512.key /etc/nginx/ssl/priv512.key
-COPY ./cert512.pem /etc/nginx/ssl/cert512.pem
-COPY ./priv256.key /etc/nginx/ssl/priv256.key
-COPY ./cert256.pem /etc/nginx/ssl/cert256.pem
 COPY ./priv384.key /etc/nginx/ssl/priv384.key
 COPY ./cert384.pem /etc/nginx/ssl/cert384.pem
 COPY ./nginx.conf /etc/nginx/nginx.conf
-COPY ./nginx.patch ./
 ENV HOME /root
 # WORKDIR $HOME
 
@@ -41,4 +35,3 @@ ENV PREFIX $HOME/bee2evp/build/local
 ENV LD_LIBRARY_PATH "${PREFIX}/lib:${LD_LIBRARY_PATH:-}"
 ENV PATH ${PREFIX}/bin:${PATH}
 EXPOSE 443
-EXPOSE 4431

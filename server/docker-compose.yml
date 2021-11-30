@@ -1,26 +1,5 @@
 version: '3'
 services:
-  nginx:
-    build:
-      context: ./nginx
-    image: btls/nginx-btls
-    container_name: nginx-btls
-    depends_on:
-      - flask
-    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
-    # директории ./backend, появятся в директории контейнера /backend
-    volumes:
-      - ./:/nginx
-    ports:
-      - "80:80"
-      - "443:443"
-      - "444:444"
-      - "445:445"
-    command: tail -F anything
-    networks:
-      back:
-        aliases:
-          - nginx
   flask:
     # Путь до Dockerfile
     build: ./backend
@@ -52,6 +31,63 @@ services:
       back:
         aliases:
           - flask-app
+  btls256:
+    build:
+      context: ./btls256
+    image: btls/btls256
+    container_name: btls256
+    depends_on:
+      - flask
+    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
+    # директории ./backend, появятся в директории контейнера /backend
+    volumes:
+      - ./:/btls256
+    ports:
+      - "80:80"
+      - "443:443"
+    command: tail -F anything
+    networks:
+      back:
+        aliases:
+          - btls256
+  btls384:
+    build:
+      context: ./btls384
+    image: btls/btls384
+    container_name: btls384
+    depends_on:
+      - flask
+    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
+    # директории ./backend, появятся в директории контейнера /backend
+    volumes:
+      - ./:/btls384
+    ports:
+      - "80:80"
+      - "443:443"
+    command: tail -F anything
+    networks:
+      back:
+        aliases:
+          - btls384
+  btls512:
+    build:
+      context: ./btls512
+    image: btls/btls512
+    container_name: btls512
+    depends_on:
+      - flask
+    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
+    # директории ./backend, появятся в директории контейнера /backend
+    volumes:
+      - ./:/btls512
+    ports:
+      - "80:80"
+      - "443:443"
+    command: tail -F anything
+    networks:
+      back:
+        aliases:
+          - btls512
 
 networks:
   back:

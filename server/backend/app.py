@@ -2,7 +2,7 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from openssl import openssl
-from test_btls import test_server_btls512, test_server_btls384, test_server_btls256
+from test_btls import test_server_btls
 
 app = Flask(__name__)
 
@@ -21,7 +21,7 @@ def index():
 
 @app.route('/check_server', methods=['GET', 'POST'])
 def check_server():
-    server_ = request.args.get('test', default = 'nginx', type = str)
+    server_ = request.args.get('test', default = 'btls256', type = str)
     print(server_)
     data = request.data.decode('utf-8').split('#')
     ssl_cipher = data[0]
@@ -40,9 +40,7 @@ def check_server():
     print(ssl_curves)
     ssl_protocol = data[3]
     print(ssl_protocol)
-    ret_codes = test_server_btls512(server_)
-    ret_codes += test_server_btls384(server_)
-    ret_codes += test_server_btls256(server_)
+    ret_codes = test_server_btls(server_)
 
     uni_code =[]
     for code_ in ret_codes:
@@ -57,18 +55,10 @@ def check_server():
                             ssl_curves=data[2],
                             ssl_protocol=data[3],
                             ssl_all=data[1],
-                            ciph5121 = uni_code[0],
-                            ciph5122 = uni_code[1],
-                            ciph5123 = uni_code[2],
-                            ciph5124 = uni_code[3],
-                            ciph3841 = uni_code[4],
-                            ciph3842 = uni_code[5],
-                            ciph3843 = uni_code[6],
-                            ciph3844 = uni_code[7],
-                            ciph2561 = uni_code[8],
-                            ciph2562 = uni_code[9],
-                            ciph2563 = uni_code[10],
-                            ciph2564 = uni_code[11])
+                            ciph1 = uni_code[0],
+                            ciph2 = uni_code[1],
+                            ciph3 = uni_code[2],
+                            ciph4 = uni_code[3])
 
 #@app.route('/check_client', methods=['GET', 'POST'])
 #def check_client():
