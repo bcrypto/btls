@@ -45,6 +45,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8443:8443"
+      - "8444:8444"
+      - "8445:8445"
     command: tail -F anything
     networks:
       back:
@@ -64,6 +67,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8443:8443"
+      - "8444:8444"
+      - "8445:8445"
     command: tail -F anything
     networks:
       back:
@@ -83,6 +89,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8443:8443"
+      - "8444:8444"
+      - "8445:8445"
     command: tail -F anything
     networks:
       back:
