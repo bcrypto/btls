@@ -14,14 +14,30 @@ def index():
         #return "<h1>Hello, World!<h1>"
         return render_template('index.html')'''
 
-#@app.route('/')
-#def index():
-#    return render_template('index.html')
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    data = request.data.decode('utf-8').split('#')
+    ciphersuites = ['DHE-BIGN-WITH-BELT-DWP-HBELT', 'DHE-BIGN-WITH-BELT-CTR-MAC-HBELT',
+                     'DHT-BIGN-WITH-BELT-DWP-HBELT', 'DHT-BIGN-WITH-BELT-CTR-MAC-HBELT',
+                     'DHE-PSK-BIGN-WITH-BELT-DWP-HBELT', 'DHE-PSK-BIGN-WITH-BELT-CTR-MAC-HBELT',
+                     'DHT-PSK-BIGN-WITH-BELT-DWP-HBELT', 'DHT-PSK-BIGN-WITH-BELT-CTR-MAC-HBELT']
+    ssl_ciphers = []
+    for ciph in ciphersuites:
+        if ciph in data[1]:
+            ssl_ciphers.append(ciph)
+
+    return render_template('index.html',
+                            ssl_cipher=data[0],
+                            ssl_curves=data[2],
+                            ssl_protocol=data[3],
+                            ssl_ciphers = ssl_ciphers,
+                            ssl_all=data[1].split(':'))
     #return "<h1>Hello from BTLS<h1>"
 
 @app.route('/check_server', methods=['GET', 'POST'])
 def check_server():
     server_ = request.args.get('test', default = 'btls256', type = str)
+    '''
     print(server_)
     data = request.data.decode('utf-8').split('#')
     ssl_cipher = data[0]
@@ -33,13 +49,14 @@ def check_server():
     for ciph in ciphersuites:
         if ciph in data[1]:
             ssl_ciphers.append(ciph)
-    # ssl_ciphers = ':'.join(ssl_ciphers)
+     ssl_ciphers = ':'.join(ssl_ciphers)
     print(ssl_cipher)
     print(ssl_ciphers)
     ssl_curves = data[2]
     print(ssl_curves)
     ssl_protocol = data[3]
     print(ssl_protocol)
+    '''
     ret_codes = test_server_btls(server_)
 
     uni_code =[]
@@ -50,11 +67,6 @@ def check_server():
             uni_code.append('\u274C')
 
     return render_template('check_server.html',
-                            ssl_cipher=data[0],
-                            ssl_ciphers=ssl_ciphers,
-                            ssl_curves=data[2],
-                            ssl_protocol=data[3],
-                            ssl_all=data[1],
                             ciph1 = uni_code[0],
                             ciph2 = uni_code[1],
                             ciph3 = uni_code[2],

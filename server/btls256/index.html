@@ -53,7 +53,9 @@
 <script type="text/javascript">
   function redirect_()
   {
-    var url = 'https://127.0.0.1:443/check_server?test=' + document.getElementById('server_').value;
+    var serv = document.getElementById('server_').value;
+    var port = serv.split(":")[1];
+    var url = 'https://127.0.0.1:' + port + '/check_server?test=' + document.getElementById('server_').value;
     location.href =url;
   }
 </script>

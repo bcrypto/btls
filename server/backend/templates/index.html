@@ -57,12 +57,14 @@
   .rtable td {
     padding: 6px 12px;
     border: 1px solid #d9d7ce;
+    vertical-align: top;
   }
   
   .rtable--flip {
     display: flex;
     overflow: hidden;
     background: none;
+    vertical-align: top;
   }
   
   .rtable--flip thead {
@@ -87,11 +89,13 @@
     min-width: -moz-min-content;
     min-width: min-content;
     flex-shrink: 0;
+    vertical-align: top;
   }
   
   .rtable--flip td,
   .rtable--flip th {
-    display: block;
+    /*display: block;*/
+    vertical-align: top;
   }
   
   .rtable--flip td {
@@ -134,11 +138,7 @@
     font-size: 16px;
     line-height: 20px;
   }
-  
-  table {
-    margin-bottom: 30px;
-  }
-  
+
   a {
     color: #ff6680;
   }
@@ -156,7 +156,7 @@
 </head>
 <body>
 
-<!--
+
 <h2>Current connection</h2>
 <table class="rtable">
   <thead>
@@ -165,6 +165,7 @@
       <th>Current Ciphersuite</th>
       <th>Supported BTLS Ciphersuites</td>
       <th>Curves</th>
+      <th>All supported ciphersuites</th>
     </tr>
   </thead>
   <tbody>
@@ -177,33 +178,12 @@
       {% endfor %}
       </td>
       <td>{{ ssl_curves }}</td>
+      <td>
+      {% for cipher in ssl_all %}
+      {{ cipher }} <br>
+      {% endfor %}
+      </td>
     </tr>
-  </tbody>
-</table>
--->
-
-<h2>Test server</h2>
-<table class="rtable">
-  <tbody>
-    <tr>
-      <td></td>
-      <td>DHE-BIGN-WITH-BELT-CTR-MAC-HBELT</td>
-      <td align="center" style="text-align:center">{{ ciph1 }}</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td>DHE-BIGN-WITH-BELT-DWP-HBELT</td>
-      <td align="center" style="text-align:center">{{ ciph2 }}</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td>DHT-BIGN-WITH-BELT-CTR-MAC-HBELT</td>
-      <td align="center" style="text-align:center">{{ ciph3 }}</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td>DHT-BIGN-WITH-BELT-DWP-HBELT</td>
-      <td align="center" style="text-align:center">{{ ciph4 }}</td>
   </tbody>
 </table>
 
