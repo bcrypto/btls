@@ -5,15 +5,17 @@ RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install cmake -y -q
 
 RUN apt-get install -y -q \
-	wget \
-	git \
-	python \
-	vim \
-	nano \
-	iptables \
-	build-essential \
-	patch
+    wget \
+    git \
+    python \
+    vim \
+    nano \
+    iptables \
+    build-essential \
+    patch
 
+# COPY ./openssl ./
+# COPY ./tsa /etc/nginx/
 COPY ./openssl.sh ./
 COPY ./nginx.sh ./
 COPY ./index.html /etc/nginx/html/index.html
@@ -26,7 +28,8 @@ ENV HOME /root
 RUN git clone https://github.com/bcrypto/bee2evp.git
 # WORKDIR $HOME/bee2evp/doc
 # RUN bash build.sh
-RUN bash ./openssl.sh \
+RUN bash ./openssl.sh
+
 WORKDIR '/'
 RUN bash ./nginx.sh
 

@@ -6,10 +6,10 @@ make
 make install
 cd ..
 
-wget http://zlib.net/zlib-1.2.11.tar.gz
-tar -zxf zlib-1.2.11.tar.gz
+wget http://zlib.net/zlib-1.2.12.tar.gz
+tar -zxf zlib-1.2.12.tar.gz
 ls /
-cd zlib-1.2.11
+cd zlib-1.2.12
 ./configure
 make
 make install
@@ -21,7 +21,7 @@ tar -zxf nginx-1.18.0.tar.gz
 cd nginx-1.18.0
 #patch -p1 -i nginx.patch
 ls /
-./configure --pid-path=/usr/local/nginx/nginx.pid --with-pcre=/pcre-8.45 --with-zlib=/zlib-1.2.11 --with-http_ssl_module --with-stream --prefix=/etc/nginx --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --with-ld-opt="-L /opt/usr/local/lib" --with-cc-opt="-I /opt/usr/local/include"
+./configure --pid-path=/usr/local/nginx/nginx.pid --with-pcre=/pcre-8.45 --with-zlib=/zlib-1.2.12 --with-http_ssl_module --with-stream --prefix=/etc/nginx --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --with-ld-opt="-L /opt/usr/local/lib" --with-cc-opt="-I /opt/usr/local/include"
 make
 make install
 cd ..

@@ -15,7 +15,7 @@ import signal
 from os.path import expanduser
 home = expanduser("~")
 
-os.environ['OPENSSL_CONF'] = '/opt/usr/local/openssl.cnf'
+os.environ['OPENSSL_CONF'] = '/home/www/openssl.cfg'
 OPENSSL_EXE_PATH = '/opt/usr/local/bin/openssl'
 
 def openssl(cmd, prefix='', echo=False, type_=0):

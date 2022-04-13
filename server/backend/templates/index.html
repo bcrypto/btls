@@ -156,6 +156,69 @@
 </head>
 <body>
 
+<script type="text/javascript">
+    function redirect_()
+    {
+        var radios = document.getElementByName('curve');
+        for (var i = 0, length = radios.length; i < length; i++) {
+            if (radios[i].checked) {
+                var url = 'https://127.0.0.1:8443/issue_cert?curve=' + radios[i];
+                location.href =url;
+                break;
+            }
+        }
+    }
+</script>
+
+<h2>TS</h2>
+<form>
+    <p>Please select hash:</p>
+    <div>
+      <input type="radio" id="h256"
+       name="hash" value="bash256" checked>
+      <label for="b256">bash256</label>
+  
+      <input type="radio" id="b384"
+       name="hash" value="bash384">
+      <label for="b384">bash384</label>
+  
+      <input type="radio" id="b512"
+       name="hash" value="bash512">
+      <label for="b512">bash512</label>
+    </div>
+    <p>Enter filename:</p>
+    <div>
+        <input type="text" id="file" value="tsa.sh">
+    </div>
+    <p>Nonce:</p>
+    <div>
+        <input type="text" id="nonce" value="False">
+    </div>
+    <div>
+      <button type="submit" OnClick="redirect_()">Отправить запрос</button>
+    </div>
+</form>
+
+<h2>Issue Cert</h2>
+<form>
+    <p>Please select bign curve:</p>
+    <div>
+      <input type="radio" id="c256"
+       name="curve" value="bign-curve256v1" checked>
+      <label for="c256">bign-curve256v1</label>
+  
+      <input type="radio" id="c384"
+       name="curve" value="bign-curve384v1">
+      <label for="c384">bign-curve384v1</label>
+  
+      <input type="radio" id="c512"
+       name="curve" value="bign-curve512v1">
+      <label for="c512">bign-curve512v1</label>
+    </div>
+    <div>
+      <button type="submit" OnClick="redirect_()">Отправить запрос</button>
+    </div>
+</form>
 
 <h2>Current connection</h2>
 <table class="rtable">
