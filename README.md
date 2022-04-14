@@ -77,7 +77,7 @@ Requirements:
 2. [docker-compose](https://docs.docker.com/compose/install/)
 
 ```console
-$ sudo docker pull btls/nginx-btls
+$ sudo docker pull btls/btls256
 $ sudo docker pull btls/flask
 $ sudo docker-compose up -d --force
 ```
@@ -86,7 +86,7 @@ Open 2 terminals.
 
 In the first:
 ```console
-$ sudo docker exec -it nginx-btls bash
+$ sudo docker exec -it btls256 bash
 // in the docker shell
 $ nginx -g "daemon off;" 
 ```
