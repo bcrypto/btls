@@ -20,3 +20,6 @@
 support
 spec/*.pdf
 clear.cmd
+
+# VS Code files
+.vscode/

@@ -3,6 +3,7 @@ export OPENSSL_BRANCH=OpenSSL_1_1_1i
 export BEE2_BRANCH=master
 export PREFIX=/opt/usr/local
 
+git clone -b dev https://github.com/bcrypto/bee2evp.git
 cd bee2evp
 git submodule update --init --remote
 cd ..

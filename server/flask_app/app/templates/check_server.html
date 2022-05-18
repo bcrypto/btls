@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Current connection</h2>
+<table class="rtable">
+  <thead>
+    <tr>
+      <th>Protocol</th>
+      <th>Current Ciphersuite</th>
+      <th>Supported BTLS Ciphersuites</td>
+      <th>Curves</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ ssl_protocol }}</td>
+      <td>{{ ssl_cipher }}</td>
+      <td>
+      {% for cipher in ssl_ciphers %}
+      {{ cipher }} <br>
+      {% endfor %}
+      </td>
+      <td>{{ ssl_curves }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Test server</h2>
+<table class="table table-striped table">
+  <tbody>
+    <tr>
+      <td></td>
+      <td>DHE-BIGN-WITH-BELT-CTR-MAC-HBELT</td>
+      <td>{{ ciph1 }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>DHE-BIGN-WITH-BELT-DWP-HBELT</td>
+      <td>{{ ciph2 }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>DHT-BIGN-WITH-BELT-CTR-MAC-HBELT</td>
+      <td>{{ ciph3 }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>DHT-BIGN-WITH-BELT-DWP-HBELT</td>
+      <td>{{ ciph4 }}</td>
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript">
+  function redirect_()
+  {
+    var serv = document.getElementById('server_').value;
+    var port = serv.split(":")[1];
+    var url = 'https://127.0.0.1:' + port + '/tls/check_server?test=' + document.getElementById('server_').value;
+    console.log(url);
+    window.open(url);
+    // window.location.href = url;
+  }
+</script>
+{% endblock %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h2>Test</h2>
+            <form>
+                <div class="form-group row">
+                    <label for="server_" class="col-sm-2 col-form-label">Server</label>
+                    <div class="col-sm-10">
+                      <input type="text" class="form-control" id="server_" placeholder="Server" value="">
+                    </div>
+                </div>
+                <div>
+                    <button type="Submit" OnClick="redirect_()">Тестировать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

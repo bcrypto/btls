@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Current connection</h1>
+<table class="table table-striped table">
+  <tbody>
+    <tr>
+        <th class="text-white bg-dark">Protocol</th>
+        <td>{{ ssl_protocol }}</td>
+    </tr>
+    <tr>
+        <th class="text-white bg-dark">Current Ciphersuite</th>
+        <td>{{ ssl_cipher }}</td>
+    </tr>
+    <tr>
+        <th class="text-white bg-dark">Supported BTLS Ciphersuites</th>
+        <td>
+            {% for cipher in ssl_ciphers %}
+            {{ cipher }} : 
+            {% endfor %}
+        </td>
+    </tr>
+    <tr>
+        <th class="text-white bg-dark">Curves</th>
+        <td>{{ ssl_curves }}</td>
+    </tr>
+    <tr>
+        <th class="text-white bg-dark">All supported ciphersuites</th>
+        <td>
+            {% for cipher in ssl_all %}
+            {{ cipher }} : 
+            {% endfor %}
+        </td>
+    </tr>
+
+  </tbody>
+</table>
+{% endblock %}

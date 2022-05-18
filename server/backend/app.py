@@ -1,15 +1,19 @@
+from ensurepip import bootstrap
 from openssl import openssl
 from test_btls import test_server_btls
 from bpki import btls_issue_cert, tsa_req
 import os
 from flask import Flask, request, jsonify, render_template, send_file
 from flask_pymongo import PyMongo
+from flask_bootstrap import Bootstrap
+
 
 app = Flask(__name__)
 
 app.config["MONGO_URI"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
 
 mongo = PyMongo(app)
+bootstrap = Bootstrap(app)
 db = mongo.db
 
 @app.route('/todo')
@@ -82,7 +86,7 @@ def index():
         if ciph in data[1]:
             ssl_ciphers.append(ciph)
 
-    return render_template('index.html',
+    return render_template('base.html',
                             ssl_cipher=data[0],
                             ssl_curves=data[2],
                             ssl_protocol=data[3],

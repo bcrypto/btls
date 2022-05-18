@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script type="text/javascript">
+    function req_ts_()
+    {
+        var radios = document.getElementsByName('hash');
+        var url = "bpki/req_ts?"
+        for (var i = 0, length = radios.length; i < length; i++) {
+            if (radios[i].checked) {
+                url += "hash=" + radios[i].value;
+                break;
+            }
+        }
+
+        url += "&file=" + document.getElementById("file").value;
+
+        var radios = document.getElementsByName('nonce');
+        for (var i = 0, length = radios.length; i < length; i++) {
+            if (radios[i].checked) {
+                url += "&nonce=" + radios[i].value;
+                break;
+            }
+        }
+        console.log(url);
+        window.open(url);
+        // location.href = url;
+    }
+</script>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h2>Timestamp</h2>
+            <form>
+                <fieldset class="form-group">
+                    <div class="row">
+                      <legend class="col-form-label col-sm-2 pt-0">Hash</legend>
+                      <div class="col-sm-10">
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="hash" id="bash256" value="bash256" checked>
+                          <label class="form-check-label" for="bash256">
+                            bash256
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="hash" id="bash384" value="bash384">
+                          <label class="form-check-label" for="bash384">
+                            bash384
+                          </label>
+                        </div>
+                        <div class="form-check disabled">
+                          <input class="form-check-input" type="radio" name="hash" id="bash512" value="bash512">
+                          <label class="form-check-label" for="bash512">
+                            bash512
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                </fieldset>
+
+                <div class="form-group row">
+                    <label for="file" class="col-sm-2 col-form-label">Filename</label>
+                    <div class="col-sm-10">
+                      <input type="text" class="form-control" id="file" placeholder="Filename">
+                    </div>
+                </div>
+
+                <fieldset class="form-group">
+                    <div class="row">
+                      <legend class="col-form-label col-sm-2 pt-0">Nonce</legend>
+                      <div class="col-sm-10">
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="nonce" id="true_" value="True" checked>
+                          <label class="form-check-label" for="true_">
+                            True
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="nonce" id="false_" value="False">
+                          <label class="form-check-label" for="false_">
+                            False
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                </fieldset>
+
+                <div class="form-group row">
+                    <div class="col-sm-10">
+                      <button type="submit" class="btn btn-primary" OnClick="req_ts_()">Отправить запрос</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col">
+            <h2>Issue Cert</h2>
+            <form>
+                <p>Please select bign curve:</p>
+                <div>
+                <input type="radio" id="c256"
+                name="curve" value="bign-curve256v1" checked>
+                <label for="c256">bign-curve256v1</label>
+            
+                <input type="radio" id="c384"
+                name="curve" value="bign-curve384v1">
+                <label for="c384">bign-curve384v1</label>
+            
+                <input type="radio" id="c512"
+                name="curve" value="bign-curve512v1">
+                <label for="c512">bign-curve512v1</label>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

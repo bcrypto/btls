@@ -14,20 +14,14 @@ RUN apt-get install -y -q \
     build-essential \
     patch
 
-# COPY ./openssl ./
-# COPY ./tsa /etc/nginx/
 COPY ./openssl.sh ./
 COPY ./nginx.sh ./
-COPY ./index.html /etc/nginx/html/index.html
 COPY ./priv256.key /etc/nginx/ssl/priv256.key
 COPY ./cert256.pem /etc/nginx/ssl/cert256.pem
 COPY ./nginx.conf /etc/nginx/nginx.conf
 ENV HOME /root
-# WORKDIR $HOME
 
-RUN git clone https://github.com/bcrypto/bee2evp.git
-# WORKDIR $HOME/bee2evp/doc
-# RUN bash build.sh
+RUN git clone -b dev https://github.com/bcrypto/bee2evp.git
 RUN bash ./openssl.sh
 
 WORKDIR '/'

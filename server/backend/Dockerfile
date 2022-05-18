@@ -1,6 +1,13 @@
 #FROM python:3.9
 FROM python:3.6.8
 
+ENV GROUP_ID=1000 USER_ID=1000
+
+RUN addgroup --gid $GROUP_ID www
+RUN adduser --uid $USER_ID --gid $GROUP_ID --disabled-password www
+RUN passwd -d www
+USER www
+
 RUN apt-get update
 RUN apt-get install -y -q \
     wget \
@@ -15,18 +22,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install cmake -y -q
 
 LABEL MAINTAINER="Yahor Laurenau lawre18@gmail.com"
 
-ENV GROUP_ID=1000 USER_ID=1000
-
-RUN addgroup --gid $GROUP_ID www
-RUN adduser --uid $USER_ID --gid $GROUP_ID --disabled-password www
-RUN passwd -d www
-#USER www
 WORKDIR '/home/www'
 
 ADD ./requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 ADD . /home/www/
-RUN pip install gunicorn
+RUN pip install gunicorn flask-bootstrap
 
 
 #ENV HOME /root
@@ -44,7 +45,7 @@ ENV PATH ${PREFIX}/bin:${PATH}
 # ENV HOME /home/www/
 
 RUN bash setup.sh
-
+#USER www
 EXPOSE 5000
 
 #ENTRYPOINT [ "gunicorn", "-w", "4", "--bind", "0.0.0.0:5000", "wsgi"]
