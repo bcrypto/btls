@@ -14,8 +14,8 @@ import os
 from os.path import expanduser
 home = expanduser("~")
 
-os.environ['OPENSSL_CONF'] = os.getcwd() + '/app/bpki/openssl.cfg'
-OPENSSL_EXE_PATH = '/opt/usr/local/bin/openssl'
+os.environ['OPENSSL_CONF'] = '<OPENSSL PREFIX>/openssl.cfg'
+OPENSSL_EXE_PATH = '<OPENSSL PREFIX>/bin/openssl'
 
 def openssl(cmd, prefix='', echo=False, type_=0):
 	cmd = '{} {} {}'.format(prefix, OPENSSL_EXE_PATH, cmd)

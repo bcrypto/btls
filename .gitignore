@@ -23,3 +23,12 @@ clear.cmd
 
 # VS Code files
 .vscode/
+
+# pycache files
+__pycache__/
+
+# python env files
+env/
+
+# Idea files
+.idea/

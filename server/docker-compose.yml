@@ -35,45 +35,49 @@ services:
           aliases:
             - btls256
   
-# btls384:
-#   build:
-#     context: ./btls384
-#   image: btls/btls384
-#   container_name: btls384
-#   depends_on:
-#     - flask
-#   # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
-#   # директории ./backend, появятся в директории контейнера /backend
-#   volumes:
-#     - ./btls384:/btls384
-#   ports:
-#     - "80:80"
-#     - "443:443"
-#     - "8443:8443"
-#     - "8444:8444"
-#     - "8445:8445"
-#     - "8446:8446"
-#   command: tail -F anything
-#
-# btls512:
-#   build:
-#     context: ./btls512
-#   image: btls/btls512
-#   container_name: btls512
-#   depends_on:
-#     - flask
-#   # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
-#   # директории ./backend, появятся в директории контейнера /backend
-#   volumes:
-#     - ./btls512:/btls512
-#   ports:
-#     - "80:80"
-#     - "443:443"
-#     - "8443:8443"
-#     - "8444:8444"
-#     - "8445:8445"
-#     - "8446:8446"
-#   command: tail -F anything
+    btls384:
+      build:
+        context: ./btls384
+      image: btls/btls384
+      container_name: btls384
+      depends_on:
+        - flask_app
+      volumes:
+        - ./btls384:/btls384
+      ports:
+        - "80:80"
+        - "443:443"
+        - "8443:8443"
+        - "8444:8444"
+        - "8445:8445"
+        - "8446:8446"
+      command: tail -F anything
+      networks:
+        back:
+          aliases:
+            - btls384
+
+    btls512:
+      build:
+        context: ./btls512
+      image: btls/btls512
+      container_name: btls512
+      depends_on:
+        - flask_app
+      volumes:
+        - ./btls512:/btls512
+      ports:
+        - "80:80"
+        - "443:443"
+        - "8443:8443"
+        - "8444:8444"
+        - "8445:8445"
+        - "8446:8446"
+      command: tail -F anything
+      networks:
+        back:
+          aliases:
+            - btls512
 
 networks:
   back:
