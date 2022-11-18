@@ -1,0 +1,88 @@
+\section{Методология}
+
+Опишем подходы при помощи которых был проведен поиск наиболее важных обновлений для TLS 1.2.
+
+\begin{enumerate}
+	\item Наиболее полное описание протокола TLS и его обновлений содержат в себе документы RFC (Request for Comments). Найти полный список можно по ссылке \href{https://www.rfc-editor.org/search/rfc\_search\_detail.php?page=All\&pubstatus[]=Any\&pub\_date\_type=any\&sortkey=Number\&sorting=ASC}{тут}.
+	
+	\item Для данного вопроса интерес представляют лишь RFC вышедшие после августа 2008 года. Тогда вышел RFC объявляющий TLS 1.2. При этом RFC, очевидно, должен быть посвящен TLS. Таких RFC \href{https://www.rfc-editor.org/search/rfc\_search\_detail.php?page=All\&title=TLS\&pubstatus[]=Any\&from\_month=August\&from\_year=2008\&pub\_date\_type=range\&to\_month=December\&to\_year=2022\&sortkey=Number\&sorting=ASC}{147}. 
+	
+	\item При этом наибольший интерес представляют RFC имеющие статус <<proposed standart>> таких RFC \href{https://www.rfc-editor.org/search/rfc\_search\_detail.php?page=All\&title=TLS\&pubstatus[]=Standards\%20Track\&std\_trk=Proposed\%20Standard\&from\_month=August\&from\_year=2008\&pub\_date\_type=range\&to\_month=December\&to\_year=2022\&sortkey=Number\&sorting=ASC}{96}.
+	
+	\item В данный список из 96 RFC попали так же посвященные DTLS (Datagram Transport Layer Security), посвященные TLS иных версий (например RFC 8997), другим протоколам действующих поверх TLS (например RFC 9103) и обновления TLS применяемые лишь в некоторых случаях (например RFC 7817).
+	
+	\item В отдельную категорию выделим RFC посвященные криптонаборам. В отличии от предыдущих категорий данные RFC следует учитывать при использовании TLS, но не требуют изменения в стандарте. Приведем тут список.
+	
+	\begin{tabular}{|c|c|l|}
+		\hline 
+		\textbf{Введены} & \textbf{Запрещены} & \textbf{Имя}\\
+		\hline 
+		5288 & & AES GCM \\
+		5289 & & ECC Suites with SHA-256/384 and AES GCM\\
+		5487 & & PSK Cipher Suites with SHA-256/384 and AES GCM\\
+		5932 & & Camellia Cipher Suites\\
+		6655 & & AES-CCM Cipher Suites\\
+		7905 & & ChaCha20-Poly1305 Cipher Suites\\
+		8422 & & ECC Cipher Suites Versions\\
+		8442 & & ECDHE\_PSK with AES-GCM and AES-CCM Cipher Suites\\
+		
+		 & 7465 & RC4 Cipher Suites\\
+		 & 9155	& MD5 and SHA-1 Signature Hashes\\
+		\hline
+	\end{tabular} 	
+
+	\item Таким образом можно отбросить множество излишних RFC оставив лишь 31. 
+	
+	\tiny
+	\begin{tabular}{|c|l|}
+		\hline
+		\textbf{номер RFC} & \textbf{название}\\
+		\hline
+
+		5425	&		Transport Layer Security (TLS) Transport Mapping for Syslog\\
+		5705	&		Keying Material Exporters for Transport Layer Security (TLS)\\
+		5746 	&		Transport Layer Security (TLS) Renegotiation Indication Extension\\
+		5878 	&		Transport Layer Security (TLS) Authorization Extensions\\
+		5929	&		Channel Bindings for TLS\\
+		5953	&		Transport Layer Security (TLS) Transport Model for the Simple Network Management Protocol (SNMP)\\
+		6066	&		Transport Layer Security (TLS) Extensions: Extension Definitions\\
+		6546 	&		Transport of Real-time Inter-network Defense (RID) Messages over HTTP/TLS\\
+		6698	&		The DNS-Based Authentication of Named Entities (DANE) Transport Layer Security (TLS) Protocol: TLSA\\
+		6961	&		The Transport Layer Security (TLS) Multiple Certificate Status Request Extension\\
+		7250 	&		Using Raw Public Keys in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)\\
+		7301	&		Transport Layer Security (TLS) Application-Layer Protocol Negotiation Extension\\
+		7366 	&		Encrypt-then-MAC for Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)\\
+		7507	&		TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks\\
+		7590	&		Use of Transport Layer Security (TLS) in the Extensible Messaging and Presence Protocol (XMPP)\\
+		7627 	&		Transport Layer Security (TLS) Session Hash and Extended Master Secret Extension\\
+		7633	&		X.509v3 Transport Layer Security (TLS) Feature Extension\\
+		7673	&		Using DNS-Based Authentication of Named Entities (DANE) TLSA Records with SRV Records\\
+		7685 	&		A Transport Layer Security (TLS) ClientHello Padding Extension\\
+		7817	&		Updated TLS Server Identity Check Procedure for Email-Related Protocols\\
+		7919 	&		Negotiated Finite Field Diffie-Hellman Ephemeral Parameters for TLS\\
+		7924	&		Transport Layer Security (TLS) Cached Information Extension\\
+		7925 	&		TLS / DTLS Profiles for the Internet of Things\\
+		8122	&		Connection-Oriented Media Transport over the TLS Protocol in SDP\\
+		8310 	&		Usage Profiles for DNS over TLS and DNS over DTLS\\
+		8314	&		Cleartext Considered Obsolete: Use of TLS for Email Submission and Access\\
+		8447 	&		IANA Registry Updates for TLS and DTLS\\
+		8449	&		Record Size Limit Extension for TLS\\
+		8460	&		SMTP TLS Reporting\\
+		8472	&		TLS Extension for Token Binding Protocol Negotiation\\
+		8737	&		ACME TLS Application-Layer Protocol Negotiation (ALPN) Challenge Extension\\
+		8842 	&		SDP Offer/Answer Considerations for DTLS and TLS\\
+		8879	&		TLS Certificate Compression\\
+		9149	&		TLS Ticket Requests\\
+		9261	&		Exported Authenticators in TLS\\
+		
+
+		
+		\hline
+	\end{tabular}
+	\normalsize
+	\item Исследовав данные RFC подробнее существенными для обновления стандарта приняты следующие RFC :
+	5746, 6066,	6961, 7366, 7627, 7633.
+	
+\end{enumerate}
+
+Далее приведем указания и разбор дополнений вызванных данными RFC.
