@@ -7,44 +7,45 @@ on:
 
 jobs:
   build:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: Build LaTeX
-        uses: xu-cheng/latex-action@v2
-        with:
-          root_file: btls.tex
-          working_directory: spec/
-          args: -jobname=btls -pdf -file-line-error -halt-on-error -interaction=nonstopmode
-      - name: Upload pdf
-        uses: actions/upload-artifact@v2
-        with:
-          name: btls
-          path: spec/btls.pdf
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Build LaTeX
+      uses: xu-cheng/latex-action@v2
+      with:
+        root_file: btls.tex
+        working_directory: spec/
+        args: -jobname=btls -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: btls
+        path: spec/btls.pdf
   deploy:
-    runs-on: [ubuntu-latest]
-    needs: [build]
+    runs-on: ubuntu-latest
+    needs: build
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: btls
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
-          prerelease: false
-      - name: Upload pdf asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./btls.pdf
-          asset_name: btls.pdf
-          asset_content_type: application/pdf
+     - name: Download artifact
+       uses: actions/download-artifact@v2
+       with:
+         name: btls
+     - name: Create release
+       id: create_release
+       uses: actions/create-release@v1
+       env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       with:
+         tag_name: ${{ github.ref }}
+         release_name: ${{ github.ref }}
+         draft: false
+         prerelease: false
+     - name: Upload pdf asset
+       uses: actions/upload-release-asset@v1
+       env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       with:
+         upload_url: ${{ steps.create_release.outputs.upload_url }}
+         asset_path: ./btls.pdf
+         asset_name: btls.pdf
+         asset_content_type: application/pdf

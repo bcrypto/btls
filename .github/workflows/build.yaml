@@ -3,21 +3,22 @@ name: build
 on:
   push:
     branches: 
-      - master
+    - master
   pull_request:
     branches:
-      - master
+    - master
 
 jobs:
   build:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-        with:
-          ref: ${{ github.ref }}
-      - name: Build LaTeX
-        uses: xu-cheng/latex-action@v2
-        with:
-          root_file: btls.tex
-          working_directory: spec/
-          args: -jobname=btls -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+    - name: Checkout
+      uses: actions/checkout@master
+      with:
+        ref: ${{ github.ref }}
+    - name: Build LaTeX
+      uses: xu-cheng/latex-action@v2
+      with:
+        root_file: btls.tex
+        working_directory: spec/
+        args: -jobname=btls -pdf -file-line-error -halt-on-error -interaction=nonstopmode

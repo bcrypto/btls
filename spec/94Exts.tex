@@ -1,0 +1,369 @@
+\begin{appendix}{Г}{рекомендуемое}
+{Дополнительные расширения приветственных сообщений}
+\label{EXTS}
+
+\hiddensection{Общие положения}
+
+В настоящем приложении определяются расширения протокола TLS, широко 
+применяемые на практике.
+%
+Использование расширений усиливает гарантии безопасности протокола TLS, 
+повышает гибкость работы с ним, обеспечивает совместимость с существующими 
+реализациями TLS, в которых расширения используются по умолчанию.
+
+Перечень расширений:
+\begin{itemize}
+\item
+расширение \verb|status_request|, введенное в~\cite{RFC6066};
+\item
+расширение \verb|status_request_v2|, введенное в~\cite{RFC6961};
+\item
+расширение \verb|extended_master_secret|, введенное в~\cite{RFC7627};
+\item
+расширение \verb|encrypt_then_mac|, введенное в~\cite{RFC7366}.
+\end{itemize}
+
+\hiddensection{Расширение \texttt{status\_request}}\label{TLSEx.SR}
+
+Расширение \lstinline{status_request} предназначено для передачи OCSP-ответа,
+который описывает текущий статус сертификата сервера. OCSP-ответ упрощает 
+проверку сертификата, позволяя избежать передачи списков отозванных 
+сертификатов и, таким образом, снижая коммуникационную нагрузку. Протокол OCSP, 
+в том числе его запросы и ответы, определен в СТБ~34.101.26.
+
+Расширению \lstinline{status_request} назначается идентификатор 5. Он указывается
+в поле \lstinline{extension_type} структуры \lstinline{Extension}.
+Соответствующее поле \lstinline{extension_data} ДОЛЖНО быть значением типа
+\lstinline{CertificateStatusRequest} в сообщении \lstinline{ClientHello} и
+быть пустым в сообщении \lstinline{ServerHello}.
+
+Тип \lstinline{CertificateStatusRequest} определяется следующим образом:
+
+\begin{lstlisting}
+struct {
+  CertificateStatusType status_type;
+  select (status_type) {
+    case ocsp: OCSPStatusRequest;
+  } request;
+} CertificateStatusRequest;
+
+enum { ocsp(1), (255) } CertificateStatusType;
+
+struct {
+  ResponderID responder_id_list<0..2^16-1>;
+  Extensions  request_extensions;
+} OCSPStatusRequest;
+
+opaque ResponderID<1..2^16-1>;
+opaque Extensions<0..2^16-1>;
+\end{lstlisting}
+
+В поле \lstinline{OCSPStatusRequest.responder_id_list} клиент указывает список
+доверенных OCSP-серверов. Пустой список означает, что доверенные серверы неявно
+известны, например, предварительно согласованы. В поле 
+\lstinline{OCSPStatusRequest.request_extensions} клиент указывает  
+OCSP-запросы. OCSP-серверы и OCSP-запросы описываются типами 
+\lstinline{ResponderID} и \lstinline{OCSPRequest} АСН.1, определенными
+в СТБ~34.101.26. Данные АСН.1 кодируются с помощью отличительных правил 
+(DER).
+
+Сервер, получив сообщение \lstinline{ClientHello} с расширением
+\lstinline{status_request}, МОЖЕТ дополнить пересылку своего сертификата
+пересылкой сведений о его статусе. Если запрошен OCSP-ответ, то серверу СЛЕДУЕТ 
+использовать информацию, содержащуюся в расширении, при выборе OCSP-серверов и 
+запросов к ним. 
+
+Сервер возвращает OCSP-ответы в сообщении \lstinline{CertificateStatus}. Это 
+сообщение пересылается сразу же после сообщения \lstinline{Certificate}, до 
+сообщений \lstinline{ServerKeyExchange} и \lstinline{CertificateRequest}.
+
+Если сервер отправляет сообщение \lstinline{CertificateStatus}, то 
+предварительно он ДОЛЖЕН включить расширение \lstinline{status_request} с 
+пустым полем \lstinline{extension_data} в сообщение \lstinline{ServerHello}.
+
+Сообщению \lstinline{CertificateStatus} назначается идентификатор 
+\lstinline{certificate_status(22)}, который добавляется в перечисление
+\lstinline{HandshakeType}:
+\begin{lstlisting}
+HandshakeType += {certificate_status(22)};
+\end{lstlisting}
+
+Сообщение \lstinline{CertificateStatus} определяется следующим образом:
+\begin{lstlisting}
+struct {
+  CertificateStatusType status_type;
+  select (status_type) {
+    case ocsp: OCSPResponse;
+  } response;
+} CertificateStatus;
+
+opaque OCSPResponse<1..2^24-1>;
+\end{lstlisting}
+
+Поле \lstinline{CertificateStatus.response.ocsp} содержит OCSP-ответ. Ответ
+представляется типом \lstinline{OCSPResponse} и кодируются по правилам DER.
+Может быть отослан только один OCSP-ответ.
+
+Сервер НЕ ДОЛЖЕН отправлять сообщение \lstinline{CertificateStatus}, если он
+получил расширение \lstinline{status_request} в сообщении
+\lstinline{ClientHello} и не включил это расширение в \lstinline{ServerHello}.
+
+Клиент, отправивший OCSP-запрос и получивший OCSP-ответ в сообщении
+\lstinline{CertificateStatus}, ДОЛЖЕН проверить ответ. Если ответ некорректен, 
+то клиент должен разорвать протокол Handshake с ошибкой
+\lstinline{bad_certificate_status_response(113)}.
+
+\hiddensection{Расширение \texttt{status\_request\_v2}}
+
+Расширение \lstinline{status_request_v2} предназначено для передачи сразу 
+нескольких OCSP-ответов, которые описывают текущие статусы сертификатов 
+сервера и удостоверяющих центров в его маршруте сертификации.
+
+Расширению \lstinline{status_request} назначается идентификатор 17. Он указывается
+в поле \lstinline{extension_type} расширения. Соответствующее поле
+\lstinline{extension_data} ДОЛЖНО быть значением типа 
+\lstinline{CertificateStatusRequestListV2} в сообщении \lstinline{ClientHello} 
+и быть пустым в сообщении \lstinline{ServerHello}. 
+
+Тип \lstinline{CertificateStatusRequestListV2} определяется следующим образом:
+
+\begin{lstlisting}
+struct {
+  CertificateStatusRequestItemV2 certificate_status_req_list<1..2^16-1>;
+} CertificateStatusRequestListV2;
+
+struct {
+  CertificateStatusType status_type;
+  uint16 request_length;
+  select (status_type) {
+    case ocsp: OCSPStatusRequest;
+    case ocsp_multi: OCSPStatusRequest;
+  } request;
+} CertificateStatusRequestItemV2;
+
+enum { ocsp(1), ocsp_multi(2), (255) } CertificateStatusType;
+\end{lstlisting}
+
+Поле \lstinline{CertificateStatusRequestItemV2.request_length} содержит
+длину \lstinline{CertificateStatusRequestItemV2.request} в октетах.
+
+Действия клиента и сервера в основном повторяют действия для расширения 
+\lstinline{status_request}. Изменения описываются ниже.
+
+Сообщение \lstinline{CertificateStatus} принимает вид:
+\begin{lstlisting}
+struct {
+  CertificateStatusType status_type;
+  select (status_type) {
+    case ocsp: OCSPResponse;
+    case ocsp_multi: OCSPResponseList;
+  } response;
+} CertificateStatus;
+
+struct {
+  OCSPResponse ocsp_response_list<1..2^24-1>;
+} OCSPResponseList;
+\end{lstlisting}
+
+Поле \lstinline{CertificateStatus.response.ocsp_multi} содержит список
+OCSP-ответов. Порядок следования ответов соответствует порядку сертификатов,
+передаваемых в сообщении \lstinline{Certificate}.
+
+Если сервер не получил OCSP-ответ, то он МОЖЕТ не включить его в 
+список \lstinline{OCSPResponseList}. Таким образом, число ответов в  
+\lstinline{OCSPResponseList} МОЖЕТ быть меньше, чем сертификатов в сообщении 
+\lstinline{Certificate}. Однако ответов НЕ МОЖЕТ быть больше, чем сертификатов.
+
+Если клиент получил неполный список OCSP-ответов, то он ДОЛЖЕН проверить 
+недостающие статусы сертификатов иным способом, например, с помощью списков 
+отозванных сертификатов.  
+
+\hiddensection{Расширение \texttt{extended\_master\_secret}}
+
+Расширение \lstinline{extended_master_secret} предназначено для защиты от атаки 
+<<Triple Handshake>>, описанной в~\cite{TripleHandshake} и упомянутой 
+в~\ref{CRYPTO.2.4} (Примечание 5). При использовании расширения изменяется 
+алгоритм вычисления мастер-ключа, установленный в~\ref{HANDSHAKE.16}. В новом 
+алгоритме учитываются все сообщения протокола Handshake, что препятствует 
+проведению атаки <<Triple Handshake>>.
+
+Расширению \lstinline{extended_master_secret} назначается идентификатор 23. Он
+указывается в поле \lstinline{extension_type} структуры \lstinline{Extension} 
+(см.~\ref{HANDSHAKE.7}). Соответствующее поле \lstinline{extension_data} ДОЛЖНО 
+быть пустым.
+
+\subsection{Вычисление мастер-ключа}
+
+Алгоритм вычисления мастер-ключа, определяемый расширением 
+\lstinline{extended_master_secret}, состоит в выполнении следующих шагов:
+\begin{enumerate}
+\item
+Объединить (конкатенировать) все отправленные и полученные сообщения протокола
+Handshake, начиная с \lstinline{ClientHello} и заканчивая
+\lstinline{ClientKeyExchange}, в строку байтов (октетов)
+\lstinline{handshake_messages}. При объединении учитывать тип и длину полей
+сообщений.
+\item
+Определить алгоритм хэширования, используемый в алгоритме генерации 
+псевдослучайных чисел (см.~\ref{HANDSHAKE.16}), и вычислить с его помощью 
+хэш-значение \lstinline{session_hash = Hash(handshake_messages)}
+строки \lstinline{handshake_messages}.
+\item
+Вычислить мастер-ключ
+\begin{lstlisting}
+master_secret = PRF(pre_master_secret, 
+  "extended master secret", session_hash)[0..47];
+\end{lstlisting}
+\end{enumerate}
+
+Клиент и сервер ДОЛЖНЫ использовать данный алгоритм, если 
+они согласовали использование расширения \lstinline{extended_master_secret}. 
+%
+Клиент и сервер ДОЛЖНЫ использовать алгоритм вычисления
+\lstinline{master_secret}, определенный в~\ref{HANDSHAKE.16}, если расширение 
+не было согласовано.
+
+\subsection{Действия при установке связи}
+
+\begin{enumerate}
+\item
+Клиент, поддерживающий  расширение \lstinline{extended_master_secret},
+ДОЛЖЕН отправить его в сообщении \lstinline{ClientHello}.
+
+\item
+Сервер, получивший расширение \lstinline{extended_master_secret} и
+поддерживающий его, ДОЛЖЕН включить расширение в сообщение
+\lstinline{ServerHello}.
+
+\item
+Если сервер получает \lstinline{ClientHello} без расширения 
+\lstinline{extended_master_secret}, то ему СЛЕДУЕТ разорвать протокол 
+Handshake. Если сервер все-таки решает продолжить протокол, 
+то он НЕ ДОЛЖЕН включать расширение в \lstinline{ServerHello}.
+
+\item
+Если клиент получает \lstinline{ServerHello} без расширения 
+\lstinline{extended_master_secret},  
+то ему СЛЕДУЕТ разорвать протокол Handshake.
+\end{enumerate}
+
+\subsection{Действия при сокращенной установке связи}
+
+\begin{enumerate}
+\item
+Если в предыдущем сеансе Handshake не использовалось расширение
+\lstinline{extended_master_secret}, то клиенту НЕ СЛЕДУЕТ возобновлять такой
+сеанс. Вместо этого клиенту СЛЕДУЕТ инициировать полную установку связи.
+
+\item
+Если сервер получает \lstinline{ClientHello} с расширением
+\lstinline{extended_master_secret}, но расширение не использовалось в предыдущем
+сеансе, то сервер ДОЛЖЕН разорвать протокол Handshake.
+
+\item
+Если сервер получает \lstinline{ClientHello} без расширения
+\lstinline{extended_master_secret}, но расширение использовалось в предыдущем 
+сеансе, то сервер ДОЛЖЕН разорвать протокол Handshake.
+
+\item
+Если сервер получает \lstinline{ClientHello} без расширения
+\lstinline{extended_master_secret} и расширение не использовалось в предыдущем 
+сеансе, то серверу СЛЕДУЕТ разорвать протокол Handshake.
+
+\item
+Если сервер получает \lstinline{ClientHello} с расширением
+\lstinline{extended_master_secret} и расширение использовалось в предыдущем 
+сеансе, то сервер ДОЛЖЕН включить расширение в \lstinline{ServerHello}.
+
+\item
+Если клиент получает \lstinline{ServerHello} с расширением
+\lstinline{extended_master_secret}, но расширение не использовалось в предыдущем 
+сеансе, то клиент ДОЛЖЕН разорвать протокол Handshake.
+
+\item
+Если клиент получает \lstinline{ServerHello} без расширения
+\lstinline{extended_master_secret}, но расширение использовалось в предыдущем 
+сеансе, то клиент ДОЛЖЕН разорвать протокол Handshake.
+\end{enumerate}
+
+\hiddensection{Расширение \texttt{encrypt\_then\_mac}}
+
+Расширение \lstinline{encrypt_then_mac} защищает от атак на схему <<сначала
+вычислить имитовставку, затем зашифровать>> (mac-then-encrypt), которая может
+применяться в протоколе Record вместе с блочным алгоритмом шифрования 
+(см.~\ref{RECORD.3.3.2}). Известно несколько уязвимостей данной схемы, в 
+основном связанных с выравниванием данных на границу блока перед зашифрованием.
+%
+При использовании расширения выполняется переключение на схему <<сначала
+зашифровать, затем вычислить имитовставку>> (encrypt-then-mac), что блокирует 
+уязвимости.
+
+Расширению \lstinline{encrypt_then_mac} назначается идентификатор 22. Он
+указывается в поле \lstinline{extension_type} структуры \lstinline{Extension}.
+Соответствующее поле \lstinline{extension_data} ДОЛЖНО быть пустым.
+
+Расширение \lstinline{encrypt_then_mac} применяется, если в протоколе Record 
+для защиты данных используется блочное шифрование. При использовании 
+расширения защита данных выполняется следующим образом:
+\begin{enumerate}
+\item
+К данным \lstinline{content}, подлежащим защите, добавляется дополнение
+\lstinline{padding} и его длина \lstinline{padding_length}. 
+Дополнение формируется по правилам, установленным в~\ref{RECORD.3.3.2}:
+\begin{itemize}
+\item
+cуммарная длина \lstinline{content}, \lstinline{padding} и 
+\lstinline{padding_length} кратна длине блока алгоритма шифрования;
+\item
+длина дополнения не превосходит 255;
+\item
+каждый байт дополнения заполняется значением длины дополнения.
+\end{itemize}
+
+\item
+Составная строка \lstinline{content + padding + padding_length} зашифровывается
+с использованием синхропосылки \lstinline{IV}. Результат зашифрования
+обозначается через \lstinline{enc_content}.
+
+\item
+От составной строки 
+\begin{lstlisting}
+seq_num + TLSCiphertext.type + TLSCiphertext.version +
+       len(IV + enc_content) + IV + enc_content
+\end{lstlisting}
+вычисляется имитовставка \lstinline{MAC}.
+
+\item
+Синхропосылка \lstinline{IV} и имитовставка \lstinline{MAC} размещаются в полях 
+структуры \lstinline{GenericBlockCipher}. Зашифрованные данные 
+\lstinline{enc_content} также размещаются в этой структуре:
+\lstinline{len(content)} зашифрованных октетов до имитовставки и 
+\lstinline{len(padding + padding_length)} после.
+\end{enumerate}
+
+Расширение \lstinline{encrypt_then_mac} согласуется стандартным образом:
+сначала клиент, а затем сервер передают его в приветственных сообщениях
+\lstinline{ClientHello} и \lstinline{ServerHello} соответственно. Расширение 
+считается согласованным, если оно было передано обеими сторонами.
+
+Если сервер получил расширение в \lstinline{ClientHello}, но выбрал криптонабор,
+в котором блочное шифрование не используется, то он НЕ ДОЛЖЕН передавать
+расширение в \lstinline{ServerHello}.
+
+При сокращенной установке связи сервер ДОЛЖЕН разорвать протокол Handshake, если
+он получает сообщение \lstinline{ClientHello} без расширения
+\lstinline{encrypt_then_mac}, но расширение использовалось в предыдущем сеансе.
+
+\begin{note*}
+В криптонаборах, установленных в приложении~\ref{BSUITES}, алгоритмы шифрования 
+не классифицируются как блочные. Поэтому расширение 
+\lstinline{encrypt_then_mac} не касается данных криптонаборов.
+\end{note*}
+
+\end{appendix}
+
+\mbox{}
+\vfill
+\mbox{}
+\clearpage
+
