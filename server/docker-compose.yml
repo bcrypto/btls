@@ -24,7 +24,7 @@ services:
     # директории ./backend, появятся в директории контейнера /backend
     # Открываем порт в контейнер
     # Порт, который будет смотреть наружу : порт который используется внутри контейнера
-    command: tail -F anything # flask run --host=0.0.0.0 --port=5000
+    command: tail -f /dev/null # flask run --host=0.0.0.0 --port=5000
     ports:
       - "8080:5000"
     networks:
@@ -49,7 +49,7 @@ services:
       - "8444:8444"
       - "8445:8445"
       - "8446:8446"
-    command: tail -F anything
+    command: tail -f /dev/null
     networks:
       back:
         aliases:
@@ -72,7 +72,7 @@ services:
       - "8444:8444"
       - "8445:8445"
       - "8446:8446"
-    command: tail -F anything
+    command: tail -f /dev/null
     networks:
       back:
         aliases:
@@ -95,7 +95,7 @@ services:
       - "8444:8444"
       - "8445:8445"
       - "8446:8446"
-    command: tail -F anything
+    command: tail -f /dev/null
     networks:
       back:
         aliases:
