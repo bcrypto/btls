@@ -64,12 +64,16 @@ $ echo "export CPATH=${PREFIX}/include:$CPATH" >> ${HOME}/.bashrc
 $ echo "export OPENSSL_CONF=${PREFIX}/openssl.cnf" >> ${HOME}/.bashrc
 $ echo "export GIO_MODULE_DIR=${PREFIX}/lib/x86_64-linux-gnu/gio/modules" >> ${HOME}/.bashrc
 ```
-(see [add_to_bashrc.sh](/client/add_to_bashrc.sh)).
+or run sh script:
+```console
+$ bash ./add_to_bashrc.sh
+```
 
 Connect to a server:
 
 ```console
 $ epiphany https://<server_ip>
+\\ if server is local <server>=127.0.0.1
 ```
 
 Test the server:
@@ -88,23 +92,22 @@ Requirements:
 Deploy:
 
 ```console
-$ sudo docker pull btls/nginx-btls
+$ sudo docker pull btls/btls256
 $ sudo docker pull btls/flask
 $ sudo docker-compose up -d --force
 ```
 
-The first terminal:
+Open 2 terminals.
 
+In the first:
 ```console
-$ sudo docker exec -it nginx-btls bash
+$ sudo docker exec -it btls256 bash
 // in the docker shell
 $ nginx -g "daemon off;" 
 ```
-
-The second terminal:
-
+In the second:
 ```console
 $ sudo docker exec -it flask bash
-# in the docker shell
+// in the docker shell
 $ flask run --host=0.0.0.0 --port=5000
 ```
