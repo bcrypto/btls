@@ -8,7 +8,7 @@ git submodule update --init --remote
 cd ..
 git clone --depth 1 -b ${OPENSSL_BRANCH} https://github.com/openssl/openssl.git
 cd openssl
-git apply ../bee2evp/btls/openssl111i.patch
+git apply ../bee2evp/btls/patch/OpenSSL_1_1_1i.patch
 cp ../bee2evp/btls/btls.c ./ssl/
 cp ../bee2evp/btls/btls.h ./ssl/
 mkdir build
