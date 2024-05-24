@@ -26,12 +26,12 @@ ENV HOME /root
 RUN git clone https://github.com/bcrypto/bee2evp.git
 # WORKDIR $HOME/bee2evp/doc
 # RUN bash build.sh
-RUN bash ./openssl.sh \
+RUN bash ./openssl.sh 
 WORKDIR '/'
 RUN bash ./nginx.sh
 
 WORKDIR $HOME
-ENV PREFIX $HOME/bee2evp/build/local
+ENV PREFIX /opt/usr/local
 ENV LD_LIBRARY_PATH "${PREFIX}/lib:${LD_LIBRARY_PATH:-}"
 ENV PATH ${PREFIX}/bin:${PATH}
 EXPOSE 443
