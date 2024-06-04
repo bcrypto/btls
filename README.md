@@ -92,22 +92,22 @@ Requirements:
 Deploy:
 
 ```console
-$ sudo docker pull btls/btls256
-$ sudo docker pull btls/flask
-$ sudo docker-compose up -d --force
+$ docker pull btls/btls256
+$ docker pull btls/flask
+$ docker-compose up -d btls256
 ```
 
 Open 2 terminals.
 
 In the first:
 ```console
-$ sudo docker exec -it btls256 bash
+$ docker exec -it btls256 bash
 // in the docker shell
 $ nginx -g "daemon off;" 
 ```
 In the second:
 ```console
-$ sudo docker exec -it flask bash
+$ docker exec -it flask bash
 // in the docker shell
 $ flask run --host=0.0.0.0 --port=5000
 ```

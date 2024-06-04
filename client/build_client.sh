@@ -4,7 +4,7 @@ libglib2.0-dev libproxy-dev \
 gsettings-desktop-schemas-dev ca-certificates -y
 
 git clone https://github.com/bcrypto/bee2evp.git
-cd bee2evp/doc
+cd bee2evp/test
 bash ./build.sh
 cd ../..
 
@@ -23,13 +23,6 @@ cd glib-networking
 mkdir build
 cd build
 
-#echo "export LD_LIBRARY_PATH=${PREFIX}/lib:\$LD_LIBRARY_PATH" >> ${HOME}/.bashrc
-#echo "export PATH=${PREFIX}/bin:\$PATH" >> ${HOME}/.bashrc
-#echo "export PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig" >> ${HOME}/.bashrc
-#echo "export CPATH=${PREFIX}/include:\$CPATH" >> ${HOME}/.bashrc
-#echo "export OPENSSL_CONF=${PREFIX}/openssl.cnf" >> ${HOME}/.bashrc
-#echo "export GIO_MODULE_DIR=${PREFIX}/lib/x86_64-linux-gnu/gio/modules" >> ${HOME}/.bashrc
-source ~/.bashrc
 which openssl
 meson --prefix=${PREFIX} -Dopenssl=enabled -Dgnutls=disabled ..
 ninja
