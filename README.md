@@ -49,7 +49,7 @@ Build:
 
 ```console
 $ cd client
-$ bash build_cliens.sh
+$ bash build_client.sh
 $ cd ..
 ```
 
@@ -72,13 +72,16 @@ $ bash ./add_to_bashrc.sh
 Connect to a server:
 
 ```console
-$ epiphany https://<server_ip>
+$ epiphany https://<server>:<port>
 \\ if server is local <server>=127.0.0.1
+\\ port from {8443, 8444, 8445, 8446}
 ```
 
-Test the server:
+Alternative way (no need to change .bashrc):
 
-* enter `server_ip` in the text area and press the "Test" button.
+```console
+$ bash run_client.sh https://<server>:<port>
+```
 
 ## The server environment
 

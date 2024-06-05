@@ -6,4 +6,4 @@ export PATH=${PREFIX}/bin:${PATH}
 export OPENSSL_CONF=${PREFIX}/openssl.cnf
 export GIO_MODULE_DIR=${PREFIX}/lib/x86_64-linux-gnu/gio/modules
 
-epiphany
+epiphany $1
