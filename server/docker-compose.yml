@@ -1,8 +1,7 @@
-version: '3'
 services:
   flask:
     # Путь до Dockerfile
-    build: ./backend
+    build: ./flask
     image: btls/flask
    # Имя для создаваемого контейнера
     container_name: flask
@@ -10,9 +9,9 @@ services:
 #      - nginx
     # Создание переменных окружения в контейнере
     volumes:
-      - ./backend:/backend
+      - ./flask:/flask
     environment:
-      - FLASK_APP=/backend/app.py
+      - FLASK_APP=/flask/app.py
       # для отладки (при запуске в релиз убрать!)
       - FLASK_ENV=development
       ## Позволяет отслеживать процесс работы приложения в командной строке
@@ -21,7 +20,7 @@ services:
     # Перезапускаем сервис в случае падения 
     restart: on-failure
     # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
-    # директории ./backend, появятся в директории контейнера /backend
+    # директории ./flask, появятся в директории контейнера /flask
     # Открываем порт в контейнер
     # Порт, который будет смотреть наружу : порт который используется внутри контейнера
     command: tail -f /dev/null # flask run --host=0.0.0.0 --port=5000
@@ -38,8 +37,6 @@ services:
     container_name: btls256
     depends_on:
       - flask
-    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
-    # директории ./backend, появятся в директории контейнера /backend\
     volumes:
       - ./btls256:/btls256
     ports:
@@ -61,8 +58,6 @@ services:
     container_name: btls384
     depends_on:
       - flask
-    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
-    # директории ./backend, появятся в директории контейнера /backend
     volumes:
       - ./btls384:/btls384
     ports:
@@ -84,8 +79,6 @@ services:
     container_name: btls512
     depends_on:
       - flask
-    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
-    # директории ./backend, появятся в директории контейнера /backend
     volumes:
       - ./btls512:/btls512
     ports:
