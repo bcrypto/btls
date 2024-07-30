@@ -421,8 +421,8 @@ Handshake означает, что сервер знает \lstinline{psk}, т.~
 \lstinline{bign256_auth}, которые включаются в 
 перечисление~\lstinline{ClientCertificateType}: 
 \begin{lstlisting}
-ClientCertificateType += {bign128_auth(121), 
-    bign192_auth(122), bign256_auth(123)};
+ClientCertificateType += {bign128_auth(231),
+    bign192_auth(232), bign256_auth(233)};
 \end{lstlisting}
 
 Для применения данных методов сервер в сообщении~\lstinline{CertificateRequest} 
@@ -462,14 +462,14 @@ $l\geq 192$ и $l = 256$ соответственно.
 СТБ~34.101.31 (пункт~6.9). Этот алгоритм добавляется в перечисление 
 \lstinline{HashAlgorithm} под именем~\lstinline{belt_hash}:
 \begin{lstlisting}
-HashAlgorithm += {belt_hash(121)};
+HashAlgorithm += {belt_hash(231)};
 \end{lstlisting}
  
-В методах аутентификации используются также алгоритмы ЭЦП, определенные в СТБ~
-34.101.45 (пункт~7.1). Эти алгоритмы добавляются в перечисление 
+В методах аутентификации используются также алгоритмы ЭЦП, определенные в 
+СТБ~34.101.45 (пункт~7.1). Эти алгоритмы добавляются в перечисление 
 \lstinline{SignatureAlgorithm} под именем~\lstinline{bign_sign}: 
 \begin{lstlisting}
-SignatureAlgorithm += {bign_sign(121)};
+SignatureAlgorithm += {bign_sign(231)};
 \end{lstlisting}
 
 Допустимая пара <<алгоритм хэширования, алгоритмы ЭЦП>> описывается значением 
