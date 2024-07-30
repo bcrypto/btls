@@ -49,7 +49,7 @@ Build:
 
 ```console
 $ cd client
-$ bash build_cliens.sh
+$ bash build_client.sh
 $ cd ..
 ```
 
@@ -64,17 +64,24 @@ $ echo "export CPATH=${PREFIX}/include:$CPATH" >> ${HOME}/.bashrc
 $ echo "export OPENSSL_CONF=${PREFIX}/openssl.cnf" >> ${HOME}/.bashrc
 $ echo "export GIO_MODULE_DIR=${PREFIX}/lib/x86_64-linux-gnu/gio/modules" >> ${HOME}/.bashrc
 ```
-(see [add_to_bashrc.sh](/client/add_to_bashrc.sh)).
+or run sh script:
+```console
+$ bash ./add_to_bashrc.sh
+```
 
 Connect to a server:
 
 ```console
-$ epiphany https://<server_ip>
+$ epiphany https://<server>:<port>
+\\ if server is local <server>=127.0.0.1
+\\ port from {8443, 8444, 8445, 8446}
 ```
 
-Test the server:
+Alternative way (no need to change .bashrc):
 
-* enter `server_ip` in the text area and press the "Test" button.
+```console
+$ bash run_client.sh https://<server>:<port>
+```
 
 ## The server environment
 
@@ -88,23 +95,22 @@ Requirements:
 Deploy:
 
 ```console
-$ sudo docker pull btls/nginx-btls
-$ sudo docker pull btls/flask
-$ sudo docker-compose up -d --force
+$ docker pull btls/btls256
+$ docker pull btls/flask
+$ docker-compose up -d btls256
 ```
 
-The first terminal:
+Open 2 terminals.
 
+In the first:
 ```console
-$ sudo docker exec -it nginx-btls bash
+$ docker exec -it btls256 bash
 // in the docker shell
 $ nginx -g "daemon off;" 
 ```
-
-The second terminal:
-
+In the second:
 ```console
-$ sudo docker exec -it flask bash
-# in the docker shell
+$ docker exec -it flask bash
+// in the docker shell
 $ flask run --host=0.0.0.0 --port=5000
 ```

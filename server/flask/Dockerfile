@@ -8,7 +8,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install cmake -y -q
 RUN apt-get install -y -q \
 	wget \
 	git \
-	python \
+	python3 \
 	vim \
 	nano \
 	iptables \
