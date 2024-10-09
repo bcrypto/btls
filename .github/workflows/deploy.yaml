@@ -26,7 +26,7 @@ jobs:
     needs: [build]
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: btls
       - name: Create release
