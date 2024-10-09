@@ -1,7 +1,7 @@
 # *****************************************************************************
 # \file openssl.py
 # \project bee2evp [EVP-interfaces over bee2 / engine of OpenSSL]
-# \brief A python wrapper over openssl commmands
+# \brief A python wrapper over openssl commands
 # \created 2019.07.10
 # \version 2021.02.18
 # \license This program is released under the GNU General Public License 
