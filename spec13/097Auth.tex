@@ -1,0 +1,120 @@
+\section{Аутентификаторы}\label{CRYPTO.Auth} 
+
+Для подтверждения своей подлинности и (или) демонстрации владения общими ключами 
+стороны вычисляют аутентификаторы~--- подписи и имитовставки стенограмм Handshake. 
+%
+Подпись размещается в поле \code{signature} сообщения 
+\token[HS.CV]{CertificateVerify}, имитовставка~--- в поле \code{verify_data} 
+сообщения \token[HS.F]{Finished}.
+%
+Клиент может отправлять сообщения \token[HS.CV]{CertificateVerify} и 
+\token[HS.F]{Finished} как в процессе выполнения Handshake, так и после 
+(см.~\ref{HS.Post.Auth}).
+
+Подписывается результат конкатенации следующих объектов: 
+\begin{enumerate}[label=\arabic*)]
+\item
+строка из 64 октетов $\hex{20}$ (пробел в таблице ASCII);
+\item
+строка \str{TLS 1.3, server CertificateVerify}, если подписантом 
+является сервер, или строка \str{TLS 1.3, client CertificateVerify}, если 
+клиент; 
+%
+% use: https://www.rfc-editor.org/errata/eid6141
+%
+\item
+октет $\hex{00}$ (разделитель);
+\item
+хэш-значение 
+$\code{Transcript-Hash}(\code{ClientHello},\ldots,\code{Certificate})$, 
+где \code{Certificate}~--- сообщение подписанта, непосредственно предшествующее 
+его же сообщению \token[HS.CV]{CertificateVerify}, в котором будет размещаться 
+подпись.
+\end{enumerate}
+
+\begin{note*}
+Выбранный формат подписываемых данных защищает от угроз для сервера, который
+поддерживает соединения TLS 1.2, используя тот же сертификат и соотвественно
+личный ключ. При выборе в TLS 1.2 режима DHE сервер подписывает и отправляет в
+сообщении \code{ServerKeyExhchange} данные, начальные 32 байта которых 
+контролирует клиент.
+\end{note*}
+
+% info: https://mailarchive.ietf.org/arch/msg/tls/AYSDPvSRV8bvwis8HTGTzwLh1IM/
+
+\begin{example*}
+Если хэш-значение состоит из 32 октетов $\hex{01}$, то сервер будет подписывать 
+следующее двоичное слово:
+\begin{align*}
+&\hexz{2020202020202020202020202020202020202020202020202020202020202020}\\
+&\hexz{2020202020202020202020202020202020202020202020202020202020202020}\\
+&\hexz{544c5320312e332c20736572766572204365727469666963617465566572696679}\\
+&\hexz{00}\\
+&\hex{0101010101010101010101010101010101010101010101010101010101010101}.
+\end{align*}
+\end{example*}
+
+Стенограмма, для которой вычисляется имитовставка, завершается сообщением,
+указанным в таблице~\ref{Table.CRYPTO.TranscrMac}.
+%
+В таблице нижний индекс $S$ означает сообщения сервера, индекс $C$~--- клиента. 
+%
+В определенных случаях имеется несколько вариантов завершающего сообщения.
+%
+Следует выбирать сообщение, которое отправляется в Handshake позднее других.
+
+\begin{table}[bht]
+\caption{Имитовставки стенограмм}\label{Table.CRYPTO.TranscrMac}
+\begin{tabular}{|l|l|l|}
+\hline
+Сторона & Окончание стенограммы & Ключ \code|base_key|\\
+\hline
+\hline
+Сервер 
+  & $\code|EncryptedExtensions|$ & \code|server_handshake_traffic_secret|\\
+  & $\code|CertificateRequest|_S$ & \\
+\hline
+Клиент
+  & $\code|Finished|_S$ & \code|client_handshake_traffic_secret|\\
+(Handshake)
+  & $\code|EndOfEarlyData|$ & \\
+  & $\code|CertificateVerify|_C$ & \\
+\hline
+Клиент
+  & $\code|CertificateVerify|_C$ & \code|client_application_traffic_secret|\\
+(после Handshake) 
+  &&\\
+\hline
+\end{tabular}
+\end{table}
+
+% check: https://www.rfc-editor.org/errata/eid6151
+% * client_application_traffic_secret -> [sender]_application_traffic_secret?
+
+При вычислении имитовставки стенограммы используется ключ \code{base_key}, 
+также представленный в таблице~\ref{Table.CRYPTO.TranscrMac}.
+%
+Вычисления выполняются следующим образом:
+\begin{align*}
+H&\gets\code{Transcript-Hash}(M),\\
+%
+\code{finished_key}
+  &\gets\code{HKDF-Expand-Label}
+(\code{base_key}, \str{finished}, \perp, \code{hash_length}),\\
+%
+\code{verify_data}
+  &\gets\code{HMAC}(\code{finished_key}, H).
+\end{align*}
+Здесь $M$~--- исходная стенограмма, \code{verify_data}~--- искомая 
+имитовставка.
+
+% skip: HMAC [RFC 2104] uses the Hash algorithm for the handshake. As noted 
+% above, the HMAC input can generally be implemented by a running hash, i.e., 
+% just the handshake hash at this point. 
+
+% skip: In previous versions of TLS, the verify_data was always 12 octets long. 
+% In TLS 1.3, it is the size of the HMAC output for the Hash used for the 
+% handshake.
+
+% skip: Alerts and any other non-handshake record types are not handshake 
+% messages and are not included in the hash computations.

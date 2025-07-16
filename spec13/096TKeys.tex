@@ -1,0 +1,44 @@
+\section{Ключи защиты записей}\label{CRYPTO.TKeys}
+
+Записи протокола Record защищаются с помощью алгоритма аутентифицированного 
+шифрования, заданного в действующем криптонаборе.
+%
+Для защиты записей, отправляемых от клиента серверу, используются
+ключ \code{client_write_key} и начальная синхропосылка \code{client_write_iv}. 
+Ключ используется напрямую, а \code{client_write_iv} складывается с порядковым 
+номером записи для получения актуальной синхропосылки (см.~\ref{RECORD.Nonce}).
+
+Пары $(\code{client_write_key},\code{client_write_iv})$ строятся по каждому из 
+ключей таблицы~~\ref{Table.CRYPTO.Schedule}, имя которого начинается с 
+\code{client}. Назначение исходного ключа определяет, для защиты записей какого 
+типа должна использоваться построенная по нему пара.  
+
+Построение выполняется следующим образом:
+\begin{align*}
+\code{client_write_key}&\gets
+\code{HKDF-Expand-Label}(K, \str{key}, \perp, \code{key_length}),\\
+\code{client_write_iv}&\gets
+\code{HKDF-Expand-Label}(K, \str{iv}, \perp, \code{iv_length}).
+\end{align*}
+Здесь $K$~--- исходный ключ (один из ключей \code{client_early_traffic_secret}, 
+\code{client_handshake_traffic_secret} или \code{client_application_traffic_secret}), 
+\code{key_length}~--- длина в байтах ключа алгоритмов аутентифицированного 
+шифрования, \code{iv_length}~--- длина в байтах синхропосылки.
+
+Ключ и начальная синхропосылка пересчитываются всякий раз, когда исходный 
+ключ~$K$ обновляется (см.~\ref{CRYPTO.Upd}).
+
+Введенные правила распространяются на ключи и начальные синхропосылки, 
+которые используются для защиты записей, отправляемых от сервера клиенту.
+Изменяются только имена объектов: префикс \code{server} вместо префикса 
+\code{client}.
+%
+В частности, 
+\begin{align*}
+\code{server_write_key}&\gets
+\code{HKDF-Expand-Label}(K, \str{key}, \perp, \code{key_length}),\\
+\code{server_write_iv}&\gets
+\code{HKDF-Expand-Label}(K, \str{iv}, \perp, \code{iv_length}),
+\end{align*}
+где~$K$~--- один из ключей \code{server_handshake_traffic_secret} или 
+\code{server_application_traffic_secret}.

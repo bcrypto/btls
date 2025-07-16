@@ -1,0 +1,146 @@
+\section{Расписание ключей}\label{CRYPTO.Schedule}
+
+В протоколе Handshake стороны определяют один или несколько общих секретов, по  
+которым затем строят подчиненные общие ключи. К общим секретам относятся 
+предварительно согласованный секрет PSK и ключ DHE, выработанный по протоколу 
+Диффи~--- Хеллмана. Перечень общих секретов определяется выбранным режимом: PSK, 
+DHE или PSK+DHE (см.~\ref{COMMON.Components}). Если тот или иной общий секрет не 
+формируется, то он полагается равным пустому слову.
+
+При построении подчиненных ключей используются стенограммы Handshake. Поскольку
+приветственные сообщения Handshake содержат случайные данные, подчиненные ключи
+будут волатильны, даже если общие секреты повторяются, например, когда в
+нескольких соединениях используется один и тот же секрет PSK, не сопровождаемый
+ключом DHE.
+
+Подчиненные ключи строятся в соответствии с расписанием, определенным на 
+рисунке~\ref{Fig.CRYPTO.Schedule}. Здесь $\code{Finished}_S$~--- сообщение 
+$\token[HS.F]{Finished}$ сервера, $\code{Finished}_C$~--- клиента.
+
+\begin{figure}[hbt]
+\begin{align*}
+K_1 &\gets\code{HKDF-Extract}(\text{PSK}, \perp),\\
+\code{binder_key}&\gets\code{Derive-Secret}(K_1,
+  \text{\str{ext binder}/\str{res binder}},\\
+  &\hspace{40pt}\perp),\\
+%
+\code{client_early_traffic_secret}&\gets\code{Derive-Secret}(K_1,
+  \str{c e traffic},\\
+  &\hspace{40pt}(\code{ClientHello})),\\
+%
+\code{early_exporter_master_secret}&\gets\code{Derive-Secret}(K_1,
+  \str{e exp master},\\
+  &\hspace{40pt}(\code{ClientHello})),\\
+%
+K_2 &\gets\code{Derive-Secret}(K_1, \str{derived}, \perp),\\
+K_3 &\gets\code{HKDF-Extract}(\text{DHE}, K_2),\\
+%
+\code{client_handshake_traffic_secret}&\gets\code{Derive-Secret}(K_3,
+  \str{c hs traffic},\\
+  &\hspace{40pt}(\code{ClientHello},\dots,\code{ServerHello})),\\
+%
+\code{server_handshake_traffic_secret}&\gets\code{Derive-Secret}(K_3,
+  \str{s hs traffic},\\
+  &\hspace{40pt}(\code{ClientHello},\dots,\code{ServerHello})),\\
+%
+K_4 &\gets\code{Derive-Secret}(K_3, \str{derived}, \perp),\\
+K_5 &\gets\code{HKDF-Extract}(\perp, K_4).\\
+%
+\code{client_application_traffic_secret}&\gets\code{Derive-Secret}(K_5,
+  \str{c ap traffic},\\
+  &\hspace{40pt}(\code{ClientHello},\dots,\code{Finished}_S)),\\
+%
+\code{server_application_traffic_secret}&\gets\code{Derive-Secret}(K_5,
+  \str{s ap traffic},\\
+  &\hspace{40pt}(\code{ClientHello},\dots,\code{Finished}_S)),\\
+%
+\code{exporter_master_secret}&\gets\code{Derive-Secret}(K_5,
+  \str{exp master},\\
+  &\hspace{40pt}(\code{ClientHello},\dots,\code{Finished}_S)),\\
+%
+\code{resumption_master_secret}&\gets\code{Derive-Secret}(K_5,
+  \str{res master},\\
+  &\hspace{40pt}(\code{ClientHello},\dots,\code{Finished}_C)).\\
+\end{align*}
+\caption{Расписание ключей}\label{Fig.CRYPTO.Schedule}
+\end{figure}
+
+Ключи $K_1,\ldots,K_5$ являются вспомогательными, они не используются за 
+пределами расписания. По~$K_1$ (ранний секрет), $K_3$ (секрет Handshake) 
+и $K_5$ (главный секрет) строятся ключи,  
+представленные в таблице~\ref{Table.CRYPTO.Schedule}. При построении 
+явно учитываются стенограммы Handshake. 
+%
+Ключи таблицы используются для построения подчиненных ключей и других объектов
+за пределами расписания. При этом стенограммы продолжают учитываться, но только
+опосредованно.
+
+\begin{table}[hbt]
+\caption{Назначение ключей}\label{Table.CRYPTO.Schedule}
+\begin{tabular}{|l|p{9cm}|}
+\hline
+Ключ & Подчиненные объекты (строятся по ключу)\\
+\hline
+\hline
+\code|binder_key| & 
+PSK-скрепка (см.~\ref{CRYPTO.Binder})\\
+%
+\hline
+\code|client_early_traffic_secret| &
+Ключ и начальная синхропосылка ранней защиты (см.~\ref{CRYPTO.TKeys})\\
+%
+\hline
+\code|early_exporter_master_secret| &
+Ранний экспортер (см.~\ref{CRYPTO.Exp})\\
+%
+\hline
+\code|client_handshake_traffic_secret| &
+Ключ и начальная синхропосылка защиты сообщений Handshake, отправляемых 
+клиентом (см.~\ref{CRYPTO.TKeys})\\
+%
+%
+\hline
+\code|server_handshake_traffic_secret| &
+Ключ и начальная синхропосылка защиты сообщений Handshake, отправляемых 
+сервером (см.~\ref{CRYPTO.TKeys})\\
+%
+\hline
+\code|client_application_traffic_secret| &
+Ключ и начальная синхропосылка защиты прикладных данных, отправляемых 
+клиентом (см.~\ref{CRYPTO.TKeys})\\
+%
+\hline
+\code|server_application_traffic_secret| &
+Ключ и начальная синхропосылка защиты прикладных данных, отправляемых 
+сервером (см.~\ref{CRYPTO.TKeys})\\
+%
+\hline
+\code|exporter_master_secret| &
+Экспортер (см.~\ref{CRYPTO.Exp})\\
+%
+\hline
+\code|resumption_master_secret| &
+PSK для возобновления связи (см.~\ref{CRYPTO.Resume})\\
+\hline
+\end{tabular}
+\end{table}
+
+При построении \code{binder_key} должна использоваться строка \str{ext binder}, 
+если используется внешний PSK, согласованный за пределами TLS, 
+и строка \str{res binder}, если PSK~--- это секрет для возобновления связи,
+построенный по \code{resumption_master_secret} в одном из предыдущих 
+соединений. 
+
+Клиент вычисляет ключ~$K_1$ для каждого PSK, который он намеревается 
+использовать. Это необходимо потому, что по~$K_1$ нужно построить сначала ключ 
+\code{binder_key}, а затем PSK-скрепку для включения в 
+\token[HS.CH]{ClientHello}. После ответа сервера клиент оставляет только один  
+ключ~$K_1$~--- тот, который соответствует PSK, выбранному сервером. Если сервер 
+отказался от использования режима PSK, то клиенту придется еще раз 
+вычислить~$K_1$, на этот раз для пустого PSK.
+
+Ключ расписания, по которому уже построены все подчиненные ключи, следует 
+уничтожить.
+
+
+

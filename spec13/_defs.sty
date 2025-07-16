@@ -1,0 +1,182 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{_defs}
+
+%%%%%%%%%%% Format %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\doubt}[1]{{\textcolor{black}{#1}}}
+\newcommand{\addendum}[1]{\textcolor{blue}{#1}}
+\newcommand{\old}[1]{}
+
+\newcommand\hexz[1]{\ensuremath\texttt{#1}}
+\newcommand\hex[1]{\hexz{#1}_{16}}
+
+\newcounter{defctr}
+\setcounter{defctr}{0}
+\renewcommand{\thedefctr}
+{\addtocounter{defctr}{1}\thechapter.\arabic{defctr}}
+
+\providecommand{\rand}[1][]{\ifthenelse{\isempty{#1}{}}
+  {\stackrel{\$}\leftarrow}{\stackrel{#1}\leftarrow}}
+
+\DeclareRobustCommand*{\code}{%
+  \ifmmode
+    \let\SavedBGroup\bgroup
+    \def\bgroup{%
+      \let\bgroup\SavedBGroup
+      \hbox\bgroup
+    }%
+  \fi
+  \lstinline
+}
+
+\newcommand{\str}[1]{\code{\"#1\"}}
+
+\lstnewenvironment{codeblock}[1][]{\lstset{#1}}{}
+\newcommand{\algname}[1]{\texttt{#1}}
+
+\newcommand{\token}[2][]{\ifthenelse{\isempty{#1}{}}
+  {\code{#2}}{\hyperref[#1]{\code{#2}}}}
+
+%%%%%%%%%%% Local Commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand\itob[1]{\ensuremath{\langle#1\rangle}}
+\newcommand\Itob[1]{\ensuremath{\left\langle#1\right\rangle}}
+\providecommand{\Lo}{\mathop{\texttt{Lo}}\nolimits}
+\providecommand{\GG}{\mathbb{G}}
+
+%%%%%%%%%%%%%%%%%%%%%%%% Renew %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\renewcommand{\le}{\leqslant}
+\renewcommand{\leq}{\leqslant}
+\renewcommand{\ge}{\geqslant}
+\renewcommand{\geq}{\geqslant}
+\providecommand{\No}{\textnumero}
+
+%%%%%%%%%%% Environments %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcounter{note}[subsubsection]
+
+\newenvironment{note*}{
+  \def\thenotename{Примечание~---~}
+  \list{}{\vskip3pt
+    \labelwidth=0pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt
+    \itemsep=0pt\itemindent=0pt\leftmargin=\parindent
+    \labelsep=0pt\small\item[\thenotename]}
+}{\vskip3pt\endlist}
+
+\newenvironment{note}{
+  \def\thenotename{Примечание~\@arabic\c@note~---~}
+  \list{}{\vskip3pt
+   \labelwidth=0pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt
+   \itemsep=0pt\itemindent=0pt\leftmargin=\parindent
+    \refstepcounter{note}
+    \labelsep=0pt\small\item[\thenotename]}
+}{\vskip3pt\endlist}
+
+\newenvironment{notes}{
+  \def\thenotename{Примечания}
+  \list{}{\vskip3pt
+    \labelwidth=0pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt
+    \itemsep=0pt\itemindent=0pt\leftmargin=\parindent
+    \labelsep=0pt\small\item[\thenotename]}\mbox{}\par
+}{\vskip3pt\endlist}
+
+\newcounter{example}[subsubsection]
+
+\newenvironment{example*}{
+ \def\theexamplename{Пример~---~}
+  \list{}{\vskip3pt
+    \labelwidth=0pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt
+    \itemsep=0pt\itemindent=0pt\leftmargin=\parindent
+    \labelsep=0pt\small\bf\itshape\item[\theexamplename]}
+}{\vskip3pt\endlist}
+
+\newenvironment{example}{
+  \def\theexamplename{Пример~\@arabic\c@example~---~}
+  \list{}{\vskip3pt
+    \labelwidth=0pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt
+    \itemsep=0pt\itemindent=0pt\leftmargin=\parindent
+    \refstepcounter{example}
+    \labelsep=0pt\small\bf\itshape\item[\theexamplename]}
+}{\vskip3pt\endlist}
+
+\newenvironment{examples}{
+  \def\theexamplename{Примеры}
+  \list{}{\vskip3pt
+    \labelwidth=0pt\topsep=0pt\partopsep=0pt\parskip=0pt\parsep=0pt
+    \itemsep=0pt\itemindent=0pt\leftmargin=\parindent
+    \refstepcounter{example}
+    \labelsep=0pt\small\bf\itshape\item[\theexamplename]}\mbox{}\par
+}{\vskip3pt\endlist}
+
+%%%%%%%%%%%%%%%%%%%%%%%% Appendix %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\apprefix{}
+\newenvironment{appendix}[3]
+{
+  \clearpage
+  \chapter*{\mbox{}\hfillПриложение~#1\hfill\mbox{}}%
+  \vskip-10pt
+  {\centering
+    {\bf (#2)}\par
+    {\large\bf #3}\par
+  }
+  \def\@currentlabel{#1}
+  \def\apprefix{#1.}
+  \def\thechapter{#1}
+  \setcounter{table}{0}
+  \setcounter{section}{0}
+  \addcontentsline{toc}{chapter}{Приложение~#1~(#2)~#3}
+}
+{
+  \def\apprefix{}
+  \def\thechapter{\@arabic\c@chapter}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%% Locale %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\addto\captionsrussian{%
+  \renewcommand{\figurename}{Рисунок}
+  \renewcommand\tablename{Таблица}
+  \renewcommand\contentsname{Содержание}
+  \renewcommand{\bibname}{Библиография}
+}
+
+\hyphenation{СКЗИ}
+
+%%%%%%%%%%%%%%%%%%%%%%%% Listings %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\lstset{
+  language=C++,                   % choose the language of the code
+  xleftmargin=\parindent,         % leftmargin
+  basicstyle=\tt,                 % the size of the fonts that are used for the code
+  keywordstyle=\color{blue},
+  numbers=none,                   % where to put the line-numbers
+  numberstyle=\normalsize,        % the size of the fonts that are used for the line-numbers
+  stepnumber=2,                   % the step between two line-numbers. If it's 1 each line 
+                                  % will be numbered
+  numbersep=5pt,                  % how far the line-numbers are from the code
+  backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+  showspaces=false,               % show spaces adding particular underscores
+  showstringspaces=false,         % underline spaces within strings
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  frame=none,                     % adds a frame around the code
+  tabsize=2,                      % sets default tabsize to 2 spaces
+  captionpos=b,                   % sets the caption-position to bottom
+  breaklines=true,                % sets automatic line breaking
+  breakatwhitespace=true,        % sets if automatic breaks should only happen at whitespace
+  escapeinside={/<}{>/}           % if you want to add a comment within your code
+}
+
+\lstset{
+morekeywords={
+  opaque,
+  uint8,
+  uint16,
+  uint32,
+  uint24,
+  uint64,
+  select,
+}}
+
+\endinput

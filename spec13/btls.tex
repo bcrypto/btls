@@ -1,0 +1,63 @@
+\documentclass[12pt,a4paper,twoside]{stb}
+
+\usepackage{cmap}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+
+\usepackage{amsmath,amssymb,xspace,xifthen,float,color,multirow}
+\usepackage{graphicx}
+\usepackage{ucs,textcase,listings}
+
+\usepackage[
+  pdftitle={The Transport Layer Security Protocol (TLS) Version 1.3},
+  pdfauthor={},
+  bookmarks=true,
+  pdfpagemode=UseOutlines,
+  pdfstartview=FitH,
+  linkcolor=black,
+  citecolor=black]{hyperref}
+
+\usepackage{ulem}
+\normalem
+
+\usepackage{longtable}
+\setlongtables
+
+\usepackage{enumitem}
+\setlist[1]{itemsep=0pt,parsep=0pt,topsep=0pt,partopsep=0pt,
+  align=left,
+  leftmargin=0pt,itemindent=1.6\parindent,
+  labelindent=\parindent,labelwidth=0.5\parindent,labelsep=*,
+  listparindent=\parindent}
+\setlist[2]{itemsep=0pt,parsep=0pt,topsep=0pt,partopsep=0pt,
+  leftmargin=2.4\parindent}
+\setlist[enumerate,1]{label=\arabic*}
+\setlist[enumerate,2]{label=\arabic*)}
+\setlist[itemize,1]{label=--}
+
+\usepackage{_defs}
+
+\setcounter{tocdepth}{1}
+\pagestyle{headings}
+
+\hoffset          = -1in 
+\voffset          = -1in
+\oddsidemargin    = 30mm             % стандарт ТКП 1.5-2004            
+\evensidemargin   = 10mm             % верхнее = 20 мм                  
+\textwidth        = 170mm            % правое  = 10 мм                  
+\topmargin        = 20mm             % левое и нижнее = не менее 20 мм  
+\textheight       = 252mm  
+\headsep          = 1\baselineskip
+\headheight       = 2\baselineskip
+\addtolength{\topmargin}{-\headheight}
+\addtolength{\topmargin}{-\headsep}
+\parindent        = 0.8cm
+
+\renewcommand{\baselinestretch}{1.05}
+
+\begin{document}
+\begin{sloppypar}
+\input{_body}
+\end{sloppypar}
+\end{document}

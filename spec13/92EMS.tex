@@ -1,0 +1,117 @@
+\begin{appendix}{Б}{обязательное}{Расширение \code{extended_master_secret}}
+\label{EMS} 
+
+\hiddensection{Назначение}\label{EMS.Intro}
+
+В настоящем приложении определяется расширение \code{extended_master_secret},
+введенное в~\cite{RFC7627}. Расширение защищает реализации TLS версии 1.2 и 
+ниже от атаки <<Triple Handshake>>~\cite{Triple}.
+%
+Использование расширения \code{extended_master_secret} является дополнительным 
+обязательным требованием СТБ 34.101.65.
+
+Протокол TLS версии 1.3 по построению защищен от атаки <<Triple Handshake>>
+и в применении расширения \code{extended_master_secret} нет необходимости.
+%
+Тем не менее, для информирования о защите, реализациям TLS версии 
+1.3 и ниже следует сообщать прикладным протоколам об использовании расширения 
+в тех случаях, когда установлено соединение TLS~1.3.
+
+\hiddensection{Вычисление мастер-ключа}\label{TLS12.MS}
+
+Если клиент и сервер согласовали применение расширения
+\code{extended_master_secret}, то они должны использовать следующий алгоритм
+вычисления мастер-ключа:
+%
+\begin{enumerate}
+\item
+Построить стенограмму \code{handshake_messages}, включив в нее сообщения
+Handshake, начиная с \code{ClientHello} и заканчивая \code{ClientKeyExchange}.
+\item
+Определить алгоритм хэширования \code{Hash}, используемый в алгоритме генерации 
+псевдослучайных чисел (см. СТБ 34.101.65 [п.~8.16]), и вычислить с его помощью 
+хэш-значение \code{session_hash = Hash(handshake_messages)}
+стенограммы \code{handshake_messages}.
+\item
+Вычислить мастер-ключ
+\begin{codeblock}
+master_secret = PRF(pre_master_secret, 
+  "extended master secret", session_hash)[0..47];
+\end{codeblock}
+\end{enumerate}
+
+Если применение расширения \code{extended_master_secret} не было согласовано,
+то клиент и сервер должны использовать алгоритм вычисления мастер-ключа, 
+определенный в СТБ 34.101.65 (п. 8.16).
+
+\hiddensection{Установка связи}\label{EMS.FullHS}
+
+Действия сторон при установке связи:
+\begin{enumerate}
+\item
+Клиент, поддерживающий  расширение \code{extended_master_secret},
+должен отправить его в сообщении \code{ClientHello}.
+
+\item
+Сервер, получивший расширение \code{extended_master_secret} и
+поддерживающий его, должен включить расширение в сообщение
+\code{ServerHello}.
+
+\item
+Если сервер получает \code{ClientHello} без расширения 
+\code{extended_master_secret}, то ему следует прервать 
+Handshake. Если сервер все-таки решает продолжить протокол, 
+то он не должен включать расширение в \code{ServerHello}.
+
+\item
+Если клиент получает \code{ServerHello} без расширения 
+\code{extended_master_secret}, то ему следует прервать Handshake.
+\end{enumerate}
+
+\hiddensection{Сокращенная установка связи}\label{EMS.AbbrHS}
+
+Действия сторон при сокращенной установке связи:
+\begin{enumerate}
+\item
+Если в предыдущем сеансе Handshake не использовалось расширение
+\code{extended_master_secret}, то клиенту не следует возобновлять такой
+сеанс. Вместо этого клиенту следует инициировать полную установку связи.
+
+\item
+Если сервер получает \code{ClientHello} с расширением
+\code{extended_master_secret}, но расширение не использовалось в предыдущем
+сеансе, то сервер должен прервать Handshake.
+
+\item
+Если сервер получает \code{ClientHello} без расширения
+\code{extended_master_secret}, но расширение использовалось в предыдущем 
+сеансе, то сервер должен прервать Handshake.
+
+\item
+Если сервер получает \code{ClientHello} без расширения
+\code{extended_master_secret} и расширение не использовалось в предыдущем 
+сеансе, то серверу следует прервать Handshake.
+
+\item
+Если сервер получает \code{ClientHello} с расширением
+\code{extended_master_secret} и расширение использовалось в предыдущем 
+сеансе, то сервер должен включить расширение в \code{ServerHello}.
+
+\item
+Если клиент получает \code{ServerHello} с расширением
+\code{extended_master_secret}, но расширение не использовалось в предыдущем 
+сеансе, то клиент должен прервать Handshake.
+
+\item
+Если клиент получает \code{ServerHello} без расширения
+\code{extended_master_secret}, но расширение использовалось в предыдущем 
+сеансе, то клиент должен прервать Handshake.
+\end{enumerate}
+
+\hiddensection{Идентификатор}\label{EMS.Id}
+
+Расширению \code{extended_master_secret} назначается идентификатор 23. 
+Он указывается в поле \code{extension_type} структуры \code{Extension}. 
+Соответствующее поле \code{extension_data} должно быть пустым.
+
+\end{appendix}

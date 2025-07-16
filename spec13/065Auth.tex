@@ -1,0 +1,329 @@
+\section{Аутентификация}\label{HS.Auth} 
+
+\subsection{Сообщение \code{Certificate}}\label{HS.CT} 
+
+В сообщении \code{Certificate} сторона передает свой сертификат для
+аутентификации, а также другие сертификаты и данные, которые подтверждают его
+подлинность.
+
+Формат сообщения \code{Certificate} описывается одноименным типом:
+%
+\begin{codeblock}
+enum {
+  X509(0),
+  RawPublicKey(2),
+  (255)
+} CertificateType;
+
+struct {
+  select (certificate_type) {
+    case RawPublicKey:
+      opaque ASN1_subjectPublicKeyInfo<1..2^24-1>;
+    case X509:
+      opaque cert_data<1..2^24-1>;
+  };
+  Extension extensions<0..2^16-1>;
+} CertificateEntry;
+
+struct {
+  opaque certificate_request_context<0..2^8-1>;
+  CertificateEntry certificate_list<0..2^24-1>;
+} Certificate;
+\end{codeblock}
+
+Поля \code{Certificate} имеют следующее значение:
+%
+\begin{itemize}
+\item
+\code{certificate_request_context}~--- синхропосылка. Если сообщение является
+ответом на запрос \token[HS.CR]{CertificateRequest}, то в поле должна быть 
+повторена синхропосылка запроса. Иначе поле должно быть пустым (иметь нулевую 
+длину); 
+
+\item
+\code{certificate_list}~--- список (цепочка) структур типа
+\code{CertificateEntry}, каждая из которых содержит один сертификат 
+и сопровождающий его набор расширений.
+\end{itemize}
+
+Если стороны не согласовывали тип сертификата 
+с помощью расширения \token[HS.Ext.ct]{server_certificate_type}
+или \token[HS.Ext.ct]{client_certificate_type}, или если согласован тип 
+\code{CertificateType.X509}, то элементы списка \code{certificate_list} должны 
+содержать сертификаты X.509 (СТБ 34.101.19). Сертификат кодируется по правилам 
+DER, код размещается в поле \code{CertificateEntry.cert_data}. 
+%
+Сертификат отправителя сообщения \code{Certificate} должен быть 
+первым в цепочке \code{certificate_list}. Следующие сертификаты следует 
+располагать так, чтобы каждый из них удостоверял предыдущий.
+%
+Поскольку точки доверия (корневые сертификаты) согласуются за пределами TLS, 
+они могут быть исключены из цепочек при условии, что стороны знают, как их 
+восстановить.
+
+% skip: Prior to TLS 1.3, "certificate_list" ordering required each certificate 
+% to certify the one immediately preceding it; however, some implementations 
+% allowed some flexibility. Servers sometimes send both a current and 
+% deprecated intermediate for transitional purposes, and others are simply 
+% configured incorrectly, but these cases can nonetheless be validated 
+% properly. For maximum compatibility, all implementations SHOULD be prepared 
+% to handle potentially extraneous certificates and arbitrary orderings from 
+% any TLS version, with the exception of the end-entity certificate which MUST 
+% be first.  
+
+Если согласован тип сертификата \code{CertificateType.RawPublicKey}, то 
+список \code{certificate_list} должен содержать не более одного 
+элемента \code{CertificateEntry}. Если список непуст, то в поле 
+\code{ASN1_subjectPublicKeyInfo} его единственного элемента размещается 
+DER-код контейнера \code{SubjectPublicKeyInfo} (см.~\ref{HS.Ext.List}).
+
+\begin{note*}
+Контейнер \code{SubjectPublicKeyInfo} содержит открытый ключ, но не 
+удостоверяющую подпись, обычную для сертификатов. Тем не менее, 
+контейнер выполняет функции сертификата, если сторона TLS ведет список
+доверенных контейнеров, согласованный за пределами TLS, и проверяет,
+что присланный в \code{Certificate} контейнер входит в список.
+\end{note*}
+
+% skip: Note that if raw public keys [RFC 7250] or the cached information 
+% extension [RFC 7924] are in use, then this message will not contain a 
+% certificate but rather some other value corresponding to the server's 
+% long-term key. 
+
+% skip: The OpenPGP certificate type [RFC6091] MUST NOT be used with TLS 1.3.
+
+Сопровождающие сертификат расширения задаются в поле 
+\code{CertificateEntry.extensions}.
+%
+Они описывается типом \code{Extension}, который определен в~\ref{HS.Ext.List}.
+%
+Расширения в сообщении \code{Certificate} сервера должны соответствовать 
+расширениям в \token[HS.CH]{ClientHello},  
+а расширения в \code{Certificate} клиента~--- расширениям в 
+\token[HS.CR]{CertificateRequest}.
+%
+Если расширение относится ко всей цепочке сертификатов, то оно должно быть 
+указано в первом элементе списка \code{certificate_list}.
+%
+Настоящий стандарт разрешает использовать только расширение 
+\token{status_request} (см.~\ref{HS.Ext.sr}). Перечень допустимых расширений 
+может дополняться за пределами стандарта.
+
+% skip: and the SignedCertificateTimestamp extension [RFC6962]
+
+Сервер должен отправить сообщение \code{Certificate}, если 
+общие ключи были сформированы в режиме DHE, т.~е. без использования 
+предварительно согласованных секретов.
+%
+Список сертификатов сервера должен быть непустым.
+
+Клиент должен отправить сообщение \code{Certificate}, только и только если
+сервер запрашивает аутентификацию с помощью сообщения 
+\token[HS.CR]{CertificateRequest}.
+%
+Если сервер запрашивает аутентификацию, а у клиента отсутствует подходящий 
+сертификат, то клиент должен отправить сообщение \code{Certificate} 
+с пустым списком \code{certificate_list}, т.~е. без сертификатов.
+
+% skip: A Finished message MUST be sent regardless of whether the Certificate 
+% message is empty.
+
+Сообщение \code{Certificate} защищается на ключе, построенном по 
+\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, 
+в зависимости от отправителя (см. \ref{CRYPTO.Schedule}).
+
+\subsection{Выбор и проверка сертификатов}\label{HS.Auth.Cert} 
+
+Клиент и сервер должны использовать сертификаты X.509 (СТБ 34.101.19), если 
+иной тип не согласован с помощью расширений 
+\token[HS.Ext.ct]{client_certificate_type}  
+и \token[HS.Ext.ct]{server_certificate_type} 
+(см. таблицу~\ref{Table.HS.Exts}).
+
+Открытый ключ сертификата должен быть совместим с одним из алгоритмов ЭЦП, 
+указанных противоположной стороной в расширении \token{signature_algorithms}
+(см.~\ref{HS.Ext.sa}).
+
+\begin{note*}
+Возможна ситуация, когда открытый ключ сертификата используется с одним 
+алгоритмом ЭЦП, а сам сертификат подписан другим алгоритмом.
+\end{note*}
+
+Дополнительные требования к сертификатам X.509:
+%
+\begin{itemize}
+\item
+в сертификат должно быть включено расширение \code{KeyUsage}, и в нем должен 
+быть установлен флаг \code{digitalSignature}; 
+
+\item
+если противоположная сторона выслала расширение 
+\token[HS.Ext.ca]{certificate_authorities}, то в цепочку сертификатов 
+\token[HS.CT]{Certificate} следует включить хотя бы один сертификат, который 
+удовлетворяет требованиям расширения (см.~\ref{HS.Ext.ca});
+
+\item
+если сервер включил в \token[HS.CR]{CertificateRequest} расширение 
+\token[HS.Ext.of]{oid_filters}, то сертификат клиента должен удовлетворять 
+требованиям расширения (см.~\ref{HS.Ext.of});
+
+\item
+если сервер может использовать расширение \token{server_name} 
+(см.~\ref{HS.Ext.sn}) при выборе своего сертификата, то клиенту следует 
+высылать это расширение.
+\end{itemize}
+
+% use: https://www.rfc-editor.org/errata/eid6139
+
+Все сертификаты X.509, включенные в \token[HS.CT]{Certificate}, должны быть 
+подписаны с помощью алгоритмов, указанных в расширениях 
+\token[HS.Ext.sa]{signature_algorithms} и 
+\token[HS.Ext.sa]{signature_algorithms_cert} противоположной стороны. 
+%
+Требование не распространяется на точки доверия, подписи которых могут не 
+проверяться.
+
+Если отправителем \token[HS.CT]{Certificate} является сервер, и он не может 
+подготовить цепочку сертификатов, в которой используются только запрошенные 
+алгоритмы ЭЦП, то серверу следует продолжить Handshake, составив резервную 
+цепочку по своему усмотрению.
+%
+В резервную цепочку могут входить сертификаты, для алгоритмов проверки подписей 
+которых неизвестно, поддерживает ли их клиент или нет.
+
+Если отправителем \token[HS.CT]{Certificate} является клиент и он также не 
+может выполнить ограничения на алгоритмы ЭЦП, то он может либо выслать 
+резервную цепочку, либо продолжить Handshake анонимно, т.~е. с пустым списком 
+сертификатов в \token[HS.CT]{Certificate}.
+
+Если получатель \token[HS.CT]{Certificate} не может по присланному списку 
+сертификатов построить подходящую цепочку, то он должен прервать Handshake
+с подходящим оповещением (\token[ALERT.Err.uc]{unsupported_certificate} по умолчанию).
+
+Если у отправителя \token[HS.CT]{Certificate} есть несколько подходящих 
+сертификатов, то он может выбрать любой из них, руководствуясь изложенными 
+правилами и дополнительными критериями.
+
+Цепочка сертификатов X.509 должна проверяться в соответствии с СТБ 34.101.19. 
+%
+Если проверку выполняет сервер, то в случае ошибки он может по своему 
+усмотрению либо продолжить Handshake без аутентификации клиента, либо прервать 
+его.
+
+Если сервер выслал в \token[HS.CT]{Certificate} пустой список сертификатов,
+то клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.de]{decode_error}.  
+
+Если пустой список сертификатов выслал клиент, то сервер может по своему 
+усмотрению либо продолжить Handshake без аутентификации клиента, либо прервать 
+его с оповещением \token[ALERT.Err.cr]{certificate_required}. 
+
+\subsection{Сообщение \code{CertificateVerify}}\label{HS.CV} 
+
+Сообщение \code{CertificateVerify} содержит подпись текущей стенограммы 
+Handshake. С помощью \code{CertificateVerify} отправитель доказывает, что он
+действительно владеет личным ключом, связанным с его сертификатом. Кроме этого, 
+подпись в \code{CertificateVerify} подтверждает целостность и подлинность 
+стенограммы. 
+
+Формат сообщения \code{CertificateVerify} описывается одноименным типом:
+
+\begin{codeblock}
+struct {
+  SignatureScheme algorithm;
+  opaque signature<0..2^16-1>;
+} CertificateVerify;
+\end{codeblock}
+
+Поля \code{CertificateVerify} имеют следующее значение:
+%
+\begin{itemize}
+\item 
+\code{algorithm}~--- идентификатор алгоритмов ЭЦП. Описывается типом 
+\code{SignatureScheme}, который определен в \ref{HS.Ext.sa};
+\item 
+\code{signature}~--- подпись стенограммы Handshake.
+\end{itemize}
+
+Подпись вырабатывается по правилам, заданным в~\ref{CRYPTO.Auth}.
+При выработке подписи используется личный ключ отправителя сообщения.
+
+Сервер должен отправлять \code{CertificateVerify} при аутентификации по 
+сертификату, после сообщения \token[HS.CT]{Certificate}.
+%
+Клиент должен отправлять \code{CertificateVerify} при аутентификации по 
+сертификату, если сертификат указан в \token[HS.CT]{Certificate} (список 
+сертификатов непуст).
+
+Сообщение \code{CertificateVerify} должно отправляться непосредственно после 
+\token[HS.CT]{Certificate} и непосредственно перед \token[HS.F]{Finished}.
+
+Идентификатор алгоритмов ЭЦП в сообщении \code{CertificateVerify} сервера 
+должен входить в список, указанный клиентом в расширении 
+\token[HS.Ext.sa]{signature_algorithms} сообщения \token[HS.CH]{ClientHello}. 
+%
+% skip: unless no valid certificate chain can be produced without unsupported 
+% algorithms (see Section 4.2.3).
+%
+Идентификатор алгоритмов ЭЦП в \code{CertificateVerify} клиента 
+должен входить в список, указанный сервером в расширении 
+\token[HS.Ext.sa]{signature_algorithms} сообщения 
+\token[HS.CR]{CertificateRequest}.  
+%
+Открытый ключ в сертификате отправителя \code{CertificateVerify} должен 
+соответствовать алгоритмам ЭЦП. 
+
+Получатель \code{CertificateVerify} должен проверить подпись в поле
+\code{signature}. При проверке должен использоваться открытый ключ из
+сертификата отправителя, присланного в сообщении \token[HS.CT]{Certificate}.
+%
+Если проверка подписи завершена с ошибкой, то получатель должен прервать 
+Handshake с оповещением \token[ALERT.Err.de2]{decrypt_error}.
+
+Сообщение \code{CertificateVerify} защищается на ключе, построенном по 
+\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, 
+в зависимости от отправителя.
+
+\subsection{Сообщение \code{Finished}}\label{HS.F} 
+
+В сообщении \code{Finished} пересылается имитовставка текущей стенограммы 
+Handshake. Имитовставка вычисляется на одном из общих ключей. Ее корректность 
+подтверждает знание общих ключей, целостность и подлинность стенограммы.
+
+Формат сообщения \code{Finished} определяется одноименным типом:
+
+\begin{codeblock}
+struct {
+  opaque verify_data[hash_length];
+} Finished;
+\end{codeblock}
+
+В поле \code{verify_data} указывается имитовставка стенограммы. 
+Имитовставка вычисляется по правилам, заданным в~\ref{CRYPTO.Auth}.
+
+Получатель \code{Finished} должен проверить имитовставку.
+В случае ошибки получатель должен прервать Handshake с 
+оповещением \token[ALERT.Err.de2]{decrypt_error}. 
+
+После того, как сервер отправил свое сообщение \code{Finished}, получил и 
+проверил ответное \token{Finished}, он может начать отправку прикладных данных. 
+%
+Сервер может отправлять прикладные данные даже раньше, не дожидаясь \code{Finished} 
+клиента. Однако при этом в момент отправки у сервера нет гарантий, что клиент 
+действительно выполняет протокол, а не просто выслал 
+\token[HS.CH]{ClientHello}.
+%
+Клиент может отправлять прикладные данные, не дожидаясь \code{Finished} 
+сервера, в рамках механизма 0-RTT.
+
+Сообщение \code{Finished} защищается на ключе, построенном по  
+\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, в 
+зависимости от отправителя.
+
+После \code{Finished} отправляемые данные должны защищаться на ключе,
+построенном по \code{client_application_traffic_key} или 
+\code{server_application_traffic_key}.
+%
+В частности, оповещения Alert, которые могут появиться при обработке сообщений 
+\token[HS.CT]{Certificate} и \token[HS.CV]{CertificateVerify} клиента,
+сервер защищает на ключе, построенном по \code{server_application_traffic_key}.

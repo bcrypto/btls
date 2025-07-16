@@ -1,0 +1,27 @@
+\section{Обновление ключей}\label{CRYPTO.Upd}
+
+По завершении Handshake стороны формируют общие ключи
+\code{client_application_traffic_secret} и
+\code{server_application_traffic_secret}, а затем строят по ним ключи защиты
+прикладных данных.
+
+Впоследствии клиент может обновить \code{client_application_traffic_secret}
+и построить по нему новый ключ защиты данных, отправляемых серверу.
+%
+Соответственно сервер может обновить \code{server_application_traffic_secret}
+и построить новый ключ защиты данных, отправляемых клиенту.
+
+Правила обновления:
+\begin{align*}
+\code{client_application_traffic_secret}&\gets\code{HKDF-Expand-Label}(\\
+  &\hspace{36pt}\code{client_application_traffic_secret},\\
+  &\hspace{36pt}\str{traffic upd}, \perp, \code{hash_length}),\\
+\code{server_application_traffic_secret}&\gets\code{HKDF-Expand-Label}(\\
+  &\hspace{36pt}\code{server_application_traffic_secret},\\
+  &\hspace{36pt}\str{traffic upd}, \perp, \code{hash_length}).
+\end{align*}
+
+Перед обновлением ключей сторона-инициатор должна отправить противоположной 
+стороне сообщение \token{KeyUpdate} (см.~\ref{HS.KU}).
+
+После обновления следует удалить предыдущие ключи.

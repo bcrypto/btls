@@ -1,0 +1,473 @@
+\section{Обмен ключами}\label{HS.KeyExchange}
+
+\subsection{Согласование параметров}\label{HS.Negot} 
+
+На этапе обмена ключами стороны согласуют параметры защиты.
+%
+Согласование начинает клиент, высылая в своем сообщении 
+\token[HS.CH]{ClientHello} устраивающие его параметры.
+
+Имеется четыре перечня параметров:
+\begin{enumerate}
+\item
+Перечень поддерживаемых криптонаборов.
+
+\item
+Перечень поддерживаемых циклических групп для протокола Диффи~--- Хеллмана.
+Задается в расширении \token{supported_groups} (см.~\ref{HS.Ext.sg}). 
+Сопровождается расширением \token{key_share} (см.~\ref{HS.Ext.ks}), в котором 
+клиент указывает открытые ключи для некоторых или всех перечисленных групп.
+
+\item
+Перечень поддерживаемых алгоритмов ЭЦП. Задается в расширении 
+\token{signature_algorithms} (см.~\ref{HS.Ext.sa}).
+%
+Может сопровождаться расширением \token[HS.Ext.sa]{signature_algorithms_cert} 
+с перечнем поддерживаемых алгоритмов проверки подписей сертификатов.
+
+\item
+Список идентификаторов предварительно согласованных секретов.
+Задается в расширении \token{pre_shared_key} (см.~\ref{HS.Ext.psk}).
+%
+Сопровождается расширением \token{psk_key_exchange_modes} 
+(см.~\ref{HS.Ext.pkem}), где клиент перечисляет допустимые режимы формирования  
+общих ключей с участием секретов.
+\end{enumerate}
+
+Если сервер решает не использовать предварительно согласованные секреты, то он 
+может делать выбор в первых трех перечнях независимо друг от друга. А именно, 
+сервер выбирает подходящие криптонабор, циклическую группу, алгоритмы ЭЦП. 
+Одновременно с выбором алгоритмов ЭЦП сервер выбирает сертификат для 
+аутентификации.
+%
+Если группы, предложенные клиентом в \token[HS.Ext.sg]{supported_groups}, не 
+устраивают сервер, то он должен закрыть соединение с оповещением 
+\token[ALERT.Err.hf]{handshake_failure} или 
+\token[ALERT.Err.is]{insufficient_security}.
+
+Если сервер решает использовать предварительно согласованный секрет, то он 
+кроме всего прочего должен выбрать режим формирования общих ключей из 
+списка, предложенного клиентом в \token[HS.Ext.pkem]{psk_key_exchange_modes}. 
+Если сервер выбирает режим PSK, то отсутствие подходящих групп в 
+\token[HS.Ext.sg]{supported_groups} не является критическим.
+
+Если сервер выбрал группу, для которой клиент не предъявил в 
+\token[HS.Ext.ks]{key_share} открытый ключ, то сервер должен выслать сообщение 
+\token[HS.HRR]{HelloRetryRequest}.
+
+Если сервер выбрал параметры, не отправляя \token[HS.HRR]{HelloRetryRequest}, 
+то он указывает их в ответном сообщении \token[HS.SH]{ServerHello}.
+%
+Сообщение формируется по следующим правилам:
+
+\begin{itemize}
+\item
+если сервер решил использовать предварительно согласованный секрет, то он 
+включает в \token[HS.SH]{ServerHello} расширение 
+\token[HS.Ext.psk]{pre_shared_key} с номером секрета в  
+списке клиента;
+
+\item
+если сервер решил использовать протокол Диффи~--- Хеллмана, то он включает в 
+\token[HS.SH]{ServerHello} расширение \token[HS.Ext.ks]{key_share}
+с выбранной циклической группой и открытым ключом для нее. 
+\end{itemize}
+
+Если сервер решил не использовать PSK, то он должен включить 
+\token[HS.Ext.ks]{key_share} в \token[HS.SH]{ServerHello}
+и впоследствии должен аутентифицироваться по сертификату, высылая 
+сообщения \token[HS.CT]{Ceritificate} и \token[HS.CV]{CertificateVerify} 
+(см.~\ref{HS.Auth}).
+%
+Если сервер решил использовать PSK, то он не должен аутентифицироваться 
+по сертификату.
+
+Если сервер не может поддержать предложенные клиентом параметры, то он должен 
+прервать Handshake с оповещением \token[ALERT.Err.hf]{handshake_failure} или 
+\token[ALERT.Err.is]{insufficient_security}. 
+
+\subsection{Сообщение \code{ClientHello}}\label{HS.CH} 
+
+Сообщение \code{ClientHello} является первым сообщением клиента,
+с его отправки начинается выполнение TLS.
+
+Формат сообщения \code{ClientHello} описывается одноименным типом:
+%
+\begin{codeblock}
+uint16 ProtocolVersion;
+opaque Random[32];
+
+uint8 CipherSuite[2];
+
+struct {
+  ProtocolVersion legacy_version = 0x0303;  /* TLS v1.2 */
+  Random random;
+  opaque legacy_session_id<0..32>;
+  CipherSuite cipher_suites<2..2^16-2>;
+  opaque legacy_compression_methods<1..2^8-1>;
+  Extension extensions<8..2^16-1>;
+} ClientHello;
+\end{codeblock}
+
+% use: https://www.rfc-editor.org/errata/eid8423
+
+Поля \code{ClientHello} имеют следующее значение:
+%
+\begin{itemize}
+\item
+\code{legacy_version}~--- устаревшее поле для номера версии TLS. По соображениям
+совместимости в поле должно быть установлено значение \code{0x0303}, которое
+представляет версию 1.2. Согласование версии выполняется с помощью расширения
+\token{supported_versions} (см.~\ref{HS.Ext.sv}).
+%
+Сервер должен проверить, что в поле установлено значение \code{0x0303}.
+При нарушении условия сервер должен закрыть соединение с оповещением 
+\token[ALERT.Err.pv]{protocol_version};
+
+% info: https://datatracker.ietf.org/doc/html/rfc8996
+   
+\item
+\code{random}~--- случайные данные клиента; 
+
+% skip: generated by a secure random number generator. 
+% TLS requires a cryptographically secure pseudorandom number generator 
+% (CSPRNG) in most cases. 
+
+% todo: pseudorandom, требования СТБ 34.101.27?
+
+\item
+\code{legacy_session_id}~--- устаревшее поле для идентификатора сеанса TLS. 
+В TLS 1.2 поле использовалось для возобновления связи.  
+%
+Если клиент получил идентификатор сеанса от сервера TLS 1.2 и желает 
+возобновить с сервером связь, то он должен указать идентификатор в поле 
+\code{legacy_session_id}. 
+%
+В остальных случаях поле должны быть пустым (иметь нулевую длину);
+
+% skip: In compatibility mode (see Appendix D.4), this field MUST be non-empty, 
+% so a client not offering a pre-TLS 1.3 session MUST generate a new 32-byte 
+% value. This value need not be random but SHOULD be unpredictable to avoid 
+% implementations fixating on a specific value (also known as ossification). 
+
+\item
+\code{cipher_suites}~--- перечень криптонаборов, которые поддерживает клиент, 
+в порядке убывания предпочтения. 
+%
+Криптонабор описывает алгоритмы аутентифицированного шифрования для защиты
+записей протокола Record и алгоритм хэширования для построения ключей и других
+криптографических операций.
+%
+Предварительно согласованные секреты связываются с алгоритмами хэширования.
+
+Если клиент в расширении \token[HS.Ext.psk]{pre_shared_key} предлагает
+использовать предварительно согласованный секрет, то ему следует включить в
+перечень хотя бы один криптонабор, алгоритм хэширования которого ассоциирован с
+секретом.
+%
+Сервер должен игнорировать криптонаборы, которые он не распознает, не
+поддерживает или не желает использовать, и обрабатывать оставшиеся криптонаборы
+без учета игнорирования;
+
+\item
+\code{legacy_compression_methods}~--- устаревшее поле со списком алгоритмов
+сжатия, которые поддерживает клиент. Список должен быть задан одним байтом, 
+и этот байт должен быть нулевым. При нарушении данного условия сервер должен 
+закрыть соединение с оповещением \token[ALERT.Err.ip]{illegal_parameter};
+
+% skip: Note that TLS 1.3 servers might receive TLS 1.2 or prior ClientHellos 
+% which contain other compression methods and (if negotiating such a prior version) 
+% MUST follow the procedures for the appropriate prior version of TLS.
+ 
+\item
+\code{extensions}~--- перечень расширений. Тип \code{Extension} определен 
+в~\ref{HS.Ext.List}. Имеются обязательные расширения. В частности, в перечень 
+должно входить расширение \token[HS.Ext.sv]{supported_versions}.
+%
+Сервер должен игнорировать нераспознанные расширения.
+
+% skip: All versions of TLS allow an extensions field to optionally follow the  
+% compression_methods field. TLS 1.3 ClientHello messages always contain  
+% extensions (minimally "supported_versions", otherwise, they will be 
+% interpreted as TLS 1.2 ClientHello messages). However, TLS 1.3 servers might 
+% receive ClientHello messages without an extensions field from prior versions 
+% of TLS. The presence of extensions can be detected by determining whether 
+% there are bytes following the compression_methods field at the end of the 
+% ClientHello. Note that this method of detecting optional data differs from 
+% the normal TLS method of having a variable-length field, but it is used for 
+% compatibility with TLS before extensions were defined. TLS 1.3 servers will 
+% need to perform this check first and only attempt to negotiate TLS 1.3 if the 
+% "supported_versions" extension is present. If negotiating a version of TLS 
+% prior to 1.3, a server MUST check that the message either contains no data 
+% after legacy_compression_methods or that it contains a valid extensions block 
+% with no data following. If not, then it MUST abort the handshake with a 
+% "decode_error" alert.
+
+\end{itemize}
+
+Клиент должен отправить \code{ClientHello} при подключении к серверу.
+%
+Клиент повторно отправляет \code{ClientHello}, если в ответ на первое сообщение 
+он получил от сервера сообщение \token[HS.HRR]{HelloRetryRequest}. 
+%
+Повторное сообщение \code{ClientHello} должно быть получено из первого 
+следующими корректировками.
+%        
+\begin{enumerate}
+\item
+Исправление расширения \token[HS.Ext.ks]{key_share}, если оно включено
+в \token[HS.HRR]{HelloRetryRequest}. Исправленное расширение должно 
+включать единственную запись \code{KeyShareEntry}, и в этой записи должен быть  
+указан открытый ключ для выбранной сервером циклической группы.
+
+\item
+Исключение расширения \token{early_data} (см.~\ref{HS.Ext.ed}), если оно
+включено. При перезапуске Handshake через \token[HS.HRR]{HelloRetryRequest}
+защита ранних прикладных данных запрещена.
+
+\item
+Включение расширения \token{cookie} (см.~\ref{HS.Ext.c}), если оно включено в 
+\token[HS.HRR]{HelloRetryRequest}.
+
+\item
+Обновление расширения \token{pre_shared_key} (см.~\ref{HS.Ext.psk}), если оно 
+включено. В расширении пересчитываются поля \code{obfuscated_ticket_age} и 
+PSK-скрепки. Могут исключаться идентификаторы PSK, алгоритмы хэширования которых не 
+соответствует криптонабору, выбранному сервером.
+
+\item
+Включение или исключение расширения \token[HS.Ext.p]{padding} 
+(см. таблицу~\ref{Table.HS.Exts}), а также изменение его размера.
+
+\item
+Корректировка в соответствии с расширением, которое определяется за пределами 
+настоящего стандарта и которое включается в \token[HS.HRR]{HelloRetryRequest}.
+\end{enumerate}
+
+Другие корректировки \code{ClientHello} не допускаются.
+
+Если сервер получает \code{ClientHello} в неоговоренные моменты времени, 
+то он должен прервать Handshake с оповещением 
+\token[ALERT.Err.um]{unexpected_message}.
+
+Если сервер установил соединение TLS версии 1.2 и в рамках \doubt{переустановки} 
+связи получает \token[HS.CH]{ClientHello} версии 1.3, то сервер должен 
+сохранить версию 1.2 соединения и \doubt{не переходить на версию 1.3}.
+
+% todo: разобраться с "and receives a TLS 1.3 ServerHello" и renegotiation.
+
+Если клиент запрашивает с помощью какого-либо расширения дополнительные 
+функциональные возможности, а сервер эти возможности не предоставляет, то 
+клиент может прервать Handshake.
+
+После отправки \code{ClientHello} клиент ожидает сообщения
+\token[HS.SH]{ServerHello} или \token[HS.HRR]{HelloRetryRequest}. Если
+используется механизм 0-RTT, то в процессе ожидания клиент может передавать
+ранние прикладные данные.
+
+\subsection{Сообщение \code{ServerHello}}\label{HS.SH} 
+
+Сервер отправляет сообщение \code{ServerHello}, если присланное 
+\token[HS.CH]{ClientHello} устраивает сервер, позволяет ему
+согласовать параметры и сформировать общие ключи.
+
+Формат сообщения \code{ServerHello} описывается одноименным типом:
+%
+\begin{codeblock}
+struct {
+  ProtocolVersion legacy_version = 0x0303;    /* TLS v1.2 */
+  Random random;
+  opaque legacy_session_id_echo<0..32>;
+  CipherSuite cipher_suite;
+  uint8 legacy_compression_method = 0;
+  Extension extensions<6..2^16-1>;
+} ServerHello;
+\end{codeblock}
+
+Поля \code{ServerHello} имеют следующее значение:
+
+\begin{itemize}
+\item
+\code{legacy_version}~---  устаревшее поле для номера версии TLS. В поле должно 
+быть установлено значение \code{0x0303}.
+%
+Клиент должен проверить данное условие и закрыть соединение с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter} при его нарушении; 
+
+% info: https://datatracker.ietf.org/doc/html/rfc8996
+
+\item
+\code{random}~--- случайные данные сервера. Должны генерироваться независимо от 
+случайных данных клиента в \code{ClientHello.random}.
+%
+При выборе TLS версии 1.2 последние 8 байтов \code{random} должны быть 
+заданы специальным образом, как это объясняется ниже;
+
+\item
+\code{legacy_session_id_echo}~--- повтор поля \code{legacy_session_id} из 
+сообщения \token[HS.CH]{ClientHello} клиента.
+%
+% skip: Note that this field is echoed even if the client's value corresponded 
+% to a cached pre-TLS 1.3 session which the server has chosen not to resume.
+%
+Клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter}, если \code{legacy_session_id_echo} 
+отличается от \code{legacy_session_id};
+
+\item
+\code{cipher_suite}~--- криптонабор, выбранный сервером из перечня 
+\code{ClientHello.cipher_suites}. 
+%
+Клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter}, если выбранный сервером криптонабор не 
+был указан в перечне клиента;
+
+\item
+\code{legacy_compression_method}~--- список алгоритмов сжатия.
+Должен быть задан одним байтом и этот байт должен быть нулевым. При 
+нарушении данного условия клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter};
+
+\item
+\code{extensions}~--- перечень расширений. Должен содержать только те
+расширения, которые нужны для согласования параметров и формирования общих
+ключей. Другие расширения могут передаваться в сообщении
+\token[HS.EE]{EncryptedExtensions}. Перечень должен включать расширение
+\token[HS.Ext.sg]{supported_groups}, а также одно или оба расширения
+\token[HS.Ext.psk]{pre_shared_key} и \token[HS.Ext.ks]{key_share}
+(см.~\ref{HS.Negot}). 
+% add:
+В перечень не должны входить расширения, которые не были включены
+в~\token[HS.CH]{ClientHello}.
+\end{itemize}
+
+Для обратной совместимости с промежуточными сетевыми устройствами (middleboxes)
+сообщение \token[HS.HRR]{HelloRetryRequest} имеет такой же формат, как 
+\code{ServerHello}. Единственное отличие состоит в том, что в поле \code{random}
+сообщения \token[HS.HRR]{HelloRetryRequest} всегда устанавливается значение
+$$
+\hex{CF21AD74E59A6111BE1D8C021E65B891C2A211167ABB8C5E079E09E2C8A8339C}.
+$$
+
+\begin{note*}
+Получено применением алгоритма хэширования SHA-256 к строке \str{HelloRetryRequest}.
+\end{note*}
+
+При приеме сообщения Handshake с типом \code{server_hello} клиент должен 
+отличить \code{ServerHello} от \token[HS.HRR]{HelloRetryRequest} на основании 
+поля \code{random}. Если в поле установлено указанное значение, то сообщение 
+обрабатывается как \token[HS.HRR]{HelloRetryRequest}.
+
+Если сервер согласовал использование TLS версии 1.2, то для защиты от атак по 
+понижению версии он должен указать в последних 8 байтах 
+\code{ServerHello.random} следующее значение:
+$$
+\hex{444F574E47524401}.
+$$
+
+% use: https://www.rfc-editor.org/errata/eid7774: Random -> random
+
+% skip: If negotiating TLS 1.1 or below, TLS 1.3 servers MUST, and TLS 1.2 
+% servers SHOULD, set the last 8 bytes of their ServerHello.Random value to the 
+% bytes: 44 4F 57 4E 47 52 44 00
+
+При согласовании TLS версии 1.2 клиент должен проверить, что последние 8 байтов 
+\code{random} отличаются от указанных выше.
+%
+Если условие не выполнено, т.~е. сервер следует данному стандарту и, таким образом,
+поддерживает TLS 1.3, то клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter}. 
+
+% skip: This mechanism provides limited protection against downgrade attacks 
+% over and above what is provided by the Finished exchange: because the 
+% ServerKeyExchange, a message present in TLS 1.2 and below, includes a signature 
+% over both random values, it is not possible for an active attacker to modify 
+% the random values without detection as long as ephemeral ciphers are used. It 
+% does not provide downgrade protection when static RSA is used. 
+
+% skip: This is a change from [RFC 5246], so in practice many TLS 1.2 clients 
+% and servers will not behave as specified above.
+
+Клиент TLS, который \doubt{переустанавливает} связь в соответствии с TLS версии 
+1.2 и при этом получает \code{ServerHello} \doubt{версии 1.3}, должен прервать 
+Handshake с оповещением \token[ALERT.Err.pv]{protocol_version}.
+
+% todo: разобраться с "which receives a TLS 1.3 ServerHello" и renegotiation.
+
+\subsection{Сообщение \code{HelloRetryRequest}}\label{HS.HRR} 
+
+Сервер отправляет сообщение \token[HS.HRR]{HelloRetryRequest},
+если присланное \token[HS.CH]{ClientHello} позволяет согласовать параметры 
+и сформировать общие ключи, но не содержит всех необходимых для этого сведений.
+
+Сообщение \code{HelloRetryRequest} имеет такой же формат, 
+как~\token[HS.SH]{ServerHello}, повторяется семантика полей 
+\code{legacy_version}, \code{legacy_session_id_echo}, \code{cipher_suite} и 
+\code{legacy_compression_method}.
+%
+Тем не менее, в настоящем стандарте \code{HelloRetryRequest} считается 
+отдельным сообщением. 
+
+Сообщение \code{HelloRetryRequest} должно содержать расширение 
+\token{supported_versions} (см.~\ref{HS.Ext.sv}). Серверу следует дополнительно 
+включить в \code{HelloRetryRequest} минимальный набор расширений, который 
+позволит скорректировать \token[HS.CH]{ClientHello}.
+%
+Как и для \token[HS.SH]{ServerHello}, сообщение \token[HS.HRR]{HelloRetryRequest}
+не должно содержать расширений, которые не были включены в 
+\token[HS.CH]{ClientHello}. Единственным исключением является необязательное 
+расширение \token{cookie} (см.~\ref{HS.Ext.c}).
+
+Кроме \token[HS.Ext.sg]{supported_versions} и \token[HS.Ext.c]{cookie} в 
+настоящем стандарте разрешается включать в \code{HelloRetryRequest} только 
+расширение \token[HS.Ext.ks]{key_share} (см.~\ref{HS.Ext.ks}).
+
+Получив \code{HelloRetryRequest}, клиент должен проверить поля
+\code{legacy_version}, \code{legacy_session_id_echo}, 
+\code{cipher_suite} и \code{legacy_compression_method} по правилам,
+установленным в~\ref{HS.SH}.
+%
+После этого клиент должен обработать расширения, начиная с 
+\token[HS.Ext.sv]{supported_versions}. 
+%
+Клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter}, если учет расширений  
+\token[HS.HRR]{HelloRetryRequest} не изменит \token[HS.CH]{ClientHello}. 
+
+Если клиент получает второе сообщение \token[HS.HRR]{HelloRetryRequest} в том 
+же соединении, т.~e. после своего повторного \token[HS.CH]{ClientHello}, то 
+он должен прервать рукопожатие с оповещением 
+\token[ALERT.Err.um]{unexpected_message}.
+
+% use: https://www.rfc-editor.org/errata/eid6136
+
+При успешной обработке \code{HelloRetryRequest} клиент должен отправить повторное сообщение 
+\token[HS.CH]{ClientHello}. 
+
+Клиент должен прервать Handshake, если выбранный сервером криптонабор не был 
+указан в перечне клиента. 
+%
+Сервер должен повторить свой выбор в \token[HS.CH]{ServerHello} после 
+повторного \token[HS.CH]{ClientHello} (если сервер выбирает криптонабор в 
+первую очередь, то это будет происходить автоматически). 
+%
+Клиент должен проверить, что в \token[HS.SH]{ServerHello} указан то же
+криптонабор, что в \code{HelloRetryRequest}. Клиент должен прервать Handshake с 
+оповещением \token[ALERT.Err.ip]{illegal_parameter} при нарушении данного
+условия.
+
+Клиенту следует исключить из повторного \token[HS.SH]{ClientHello} те предварительно
+согласованные секреты, которые не соответствуют алгоритму хэширования 
+выбранного криптонабора.
+
+% skip: This allows the client to avoid having to compute partial hash 
+% transcripts for multiple hashes in the second ClientHello.
+
+Клиент должен проверить, что версия TLS, указанная сервером в сообщении 
+\code{HelloRetryRequest} через расширение 
+\token[HS.Ext.sv]{supported_versions}, повторяется в 
+\token[HS.SH]{ServerHello}. Клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter} при нарушении данного условия.
+
+
+

@@ -1,0 +1,67 @@
+\section{Стенограммы}\label{CRYPTO.Transcr} 
+
+При криптографических вычислениях используются стенограммы Handshake.
+Стенограммы составляются из сообщений Handshake, переданных между сторонами к 
+определенному моменту. 
+%
+Другими словами, стенограмма~--- это подпоследовательность следующей 
+последовательности:
+\begin{align*}
+&\code{ClientHello}, \code{HelloRetryRequest}, \code{ClientHello}_2, 
+\code{ServerHello},\code{EncryptedExtensions},\\ 
+%
+&\hspace{12pt}\code{CertificateRequest}_S, \code{Certificate}_S, 
+\code{CertificateVerify}_S, \code{Finished}_S,\\
+%
+&\hspace{12pt}\code{EndOfEarlyData}, \code{Certificate}_C, 
+\code{CertificateVerify}_C, \code{Finished}_C.
+\end{align*}
+Здесь нижний индекс~$2$ означает повторное сообщение, 
+индекс $S$~--- сообщение сервера, $C$~--- клиента.
+%
+В самом начале Handshake стенограмма представляет собой пустую 
+последовательность~$\perp$. Первое сообщение стенограммы~--- это 
+обязательно~\token[HS.CH]{ClientHello}.
+
+В сообщениях стенограммы сохраняются поля типа и длины (см.~\ref{HS.Msg}). 
+Заголовки записей Record, в которые сообщения Handshake инкапсулируются, не 
+учитываются. Сообщения интерпретируются как слова из~$\{0,1\}^{8*}$. 
+
+Стенограммы хэшируется с помощью алгоритма \code{Transcript-Hash}. 
+Алгоритм получает на вход стенограмму $M=(M_1,M_2,\ldots,M_m)$
+и возвращает хэш-значение $Y\in\{0,1\}^n$.
+
+Шаги алгоритма:
+\begin{enumerate}
+\item
+Если $M$ содержит сообщение~\token[HS.HRR]{HelloRetryRequest}, то 
+\begin{enumerate}
+\item
+$M_1\gets\itob{\code{message_type}}_8\parallel 0^{16}\parallel
+\itob{\code{hash_length}}_8\parallel\code{Hash}(M_1)$,
+где \code{message_type}~--- константа, заданная в перечислении
+\code{HandshakeType} (см.~\ref{HS.Msg}).
+\end{enumerate}
+\item
+Установить $Y\gets\code{Hash}(M_1\parallel M_2\parallel\ldots M_m)$.
+\item
+Возвратить~$Y$.
+\end{enumerate}
+
+\begin{note*}
+На шаге 1.1 алгоритма $M_1=\code{ClientHello}$, $M_2=\code{HelloRetryRequest}$.
+%
+Сообщение $\code{ClientHello}$ заменяется искусственным сообщением типа 
+\code{message_type}, которое содержит $\code{Hash}(\code{ClientHello})$.
+%
+Замена позволяет серверу без состояния перезапускать Handshake, не сохраняя 
+\code{ClientHello}, а пересылая его хэш-значение в расширении 
+\token[HS.Ext.c]{cookie} сообщения~\token[HS.HRR]{HelloRetryRequest} 
+(см.~\ref{HS.Ext.c}).
+\end{note*}
+
+% skip: In general, implementations can implement the transcript by keeping a  
+% running transcript hash value based on the negotiated hash.  Note,
+% however, that subsequent post-handshake authentications do not
+% include each other, just the messages through the end of the main
+% handshake.

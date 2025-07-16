@@ -1,0 +1,110 @@
+\section{Параметры сервера}\label{HS.Params} 
+
+\subsection{Сообщение \code{EncryptedExtensions}}\label{HS.EE} 
+
+В сообщении \code{EncryptedExtensions} сервер пересылает защищенные расширения.
+
+Формат сообщения описывается одноименным типом:
+%
+\begin{codeblock}
+struct {
+  Extension extensions<0..2^16-1>;
+} EncryptedExtensions;
+\end{codeblock}
+
+В поле \code{extensions} указывается список расширений. Допустимые расширения 
+перечислены в таблице~\ref{Table.HS.Exts}.
+
+Сервер должен выслать \code{EncryptedExtensions} сразу после своего сообщения 
+\token[HS.F]{Finished}. 
+
+Сообщение \code{EncryptedExtensions} защищается на ключе, построенном по 
+\code{server_handshake_traffic_secret} (см.~\ref{CRYPTO.Schedule}). Это первое 
+сообщение, которое защищается на данном ключе.
+
+Клиент должен проверить, что \code{EncryptedExtensions} содержит только 
+допустимые расширения. При нарушении условия клиент должен прервать Handshake
+с оповещением \token[ALERT.Err.ip]{illegal_parameter}.
+
+\subsection{Сообщение \code{CertificateRequest}}\label{HS.CR} 
+
+С помощью сообщения \code{CertificateRequest} сервер запрашивает сертификат 
+клиента для его аутентификации. Сервер может выслать \code{CertificateRequest}, 
+только если сам аутентифицируется по сертификату.
+
+Формат сообщения \code{CertificateRequest} описывается одноименным типом:
+%
+\begin{codeblock}
+struct {
+  opaque certificate_request_context<0..2^8-1>;
+  Extension extensions<0..2^16-1>;
+ } CertificateRequest;
+\end{codeblock}
+
+% use: https://www.rfc-editor.org/errata/eid5682
+
+Поля \code{CertificateRequest} имеют следующее значение:
+
+\begin{itemize}
+\item
+\code{certificate_request_context}~--- строка, которая 
+идентифицирует запрос сертификата и которая будет дублироваться в сообщении  
+\token[HS.CT]{Certificate} клиента.
+%
+Если в соединении высылается несколько сообщений \code{CertificateRequest},
+то их строки \code{certificate_request_context} не должны повторяться.
+%
+Если \code{CertificateRequest} высылается в Handshake, а не по его завершении,
+то строка должна иметь нулевую длину.
+%
+При отправке \code{CertificateRequest} после Handshake серверу следует выбирать 
+строки так, чтобы клиент не мог их предсказать (например, генерируя случайным 
+образом);
+
+% skip: ...in order to prevent an attacker who has temporary access to the 
+% client's private key from pre-computing valid CertificateVerify messages.
+
+\item
+\code{extensions}~--- перечень расширений, которые описывают параметры 
+запрашиваемого сертификата. Перечень должен содержать расширение
+\token[HS.Ext.sa]{signature_algorithms}, может содержать другие расширения.
+%
+Клиент должен игнорировать нераспознанные расширения.
+\end{itemize}
+
+Сообщение \code{CertificateRequest} не является обязательным. Если сервер 
+высылает \code{CertificateRequest}, то он должен это сделать сразу после 
+\token[HS.EE]{EncryptedExtensions}.
+
+% skip: In prior versions of TLS, the CertificateRequest message carried a list 
+% of signature algorithms and certificate authorities which the server would 
+% accept. In TLS 1.3, the former is expressed by sending the 
+% "signature_algorithms" and optionally "signature_algorithms_cert" extensions. 
+% The latter is expressed by sending the "certificate_authorities" extension 
+% (see Section 4.2.4).
+
+Если сервер аутентифицируется с помощью PSK, согласованного в предыдущем 
+соединении, то он не должен отправлять \code{CertificateRequest} в протоколе 
+Handshake, хотя может это сделать по завершении протокола
+(см.~\ref{HS.Post.Auth}) при условии, что клиент выслал в
+\token[HS.CH]{ClientHello} расширение \token{post_handshake_auth}
+(см.~\ref{HS.Ext.pha}).
+%
+Если сервер аутентифицируется с помощью PSK, согласованного за пределами TLS, 
+то он не должен отправлять \code{CertificateRequest} ни в протоколе Handshake, 
+ни по его завершении.
+
+% use: https://www.rfc-editor.org/errata/eid6205
+% skip: Future specifications MAY provide an extension to permit this. 
+
+% info: https://mailarchive.ietf.org/arch/msg/tls/TugB5ddJu3nYg7chcyeIyUqWSbA/
+% * Suppose a client Alice performs an initial handshake with Charlie. Charlie,
+%   masquerading as Alice, subsequently performs a handshake with Bob. 
+%   Following a PSK resumption, Bob requests authentication from Charlie 
+%   (impersonating Alice). Charlie then requests authentication from Alice, and 
+%   the returned signature will also be a valid signature for the session with 
+%   Bob. 
+% info: https://eprint.iacr.org/2016/711.pdf
+
+Сообщение \code{CertificateRequest} защищается на ключе, построенном по 
+\code{server_handshake_traffic_secret} (см.~\ref{CRYPTO.Schedule}). 

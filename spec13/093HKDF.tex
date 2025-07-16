@@ -1,0 +1,144 @@
+\section{Алгоритмы построения ключей}\label{CRYPTO.HKDF}
+
+\subsection{Назначение}\label{CRYPTO.HKDF.Intro}
+
+Для построения ключей используются алгоритмы \code{HKDF-Extract} и 
+\code{HKDF-Expand} схемы HKDF (см.~\ref{COMMON.Components}).
+%
+C помощью \code{HKDF-Extract} по энтропийному слову $X$ произвольной длины
+(ключевому материалу) и синхропосылке строится ключ~$K$ фиксированной длины.
+%
+Затем с помощью \code{HKDF-Expand} по ключу~$K$ и еще одной синхропосылке
+строится набор подчиненных ключей.
+%
+Алгоритмы \code{HKDF-Extract} и \code{HKDF-Expand} можно вызывать рекурсивно,
+используя построенные ключи в качестве ключевого материала и синхропосылок
+при новых вызовах.
+%
+В результате будет получен набор ключей, иерархически связанных друг с другом.
+%
+Связь такова, что по подчиненному ключу вычислительно трудно определить как ключ, 
+по которому он построен, так и другие подчиненные ключи.
+
+Для учета специфики TLS алгоритм \code{HKDF-Expand} расширяется сначала до алгоритма
+\code{HKDF-Expand-Label}, а затем до \code{Derive-Secret}. При расширении
+усложняется интерфейс \code{HKDF-Expand}~--- вместо единой синхропосылки на вход
+подаются ее части. 
+%
+В первой части указывается метка (название) ключа, который строится, во второй~--- 
+контекст, в котором построение выполняется. В \code{Derive-Secret} в качестве 
+контекста выступает стенограмма протокола Handshake. Контекст может быть пустым. 
+
+\subsection{Интерфейс}\label{CRYPTO.HKDF.IFace}
+
+Входными данными \code{HKDF-Extract} являются ключевой
+материал~$X\in\{0,1\}^{8*}$ и синхропосылка~$S\in\{0,1\}^{8*}$. Выходными
+данными является ключ~$K\in\{0,1\}^n$.
+
+Входными данными \code{HKDF-Expand} являются ключ~$K\in\{0,1\}^{8*}$,
+синхропосылка~$S\in\{0,1\}^{8*}$ и неотрицательное целое~$m$~--- длина выхода в 
+байтах. Выходными данными является подчиненный ключ~$Y\in\{0,1\}^{8m}$.
+
+Входными данными \code{HKDF-Expand-Label} являются 
+ключ~$K\in\{0,1\}^{8*}$, метка подчиненного ключа~$L\in\{0,1\}^{8*}$,
+контекст~$C\in\{0,1\}^{8*}$ и длина~$m$. 
+%
+Выходными данными является подчиненный ключ~$Y\in\{0,1\}^{8m}$.
+
+Входными данными \code{Derive-Secret} являются ключ~$K\in\{0,1\}^{8*}$, 
+метка подчиненного ключа~$L\in\{0,1\}^{8*}$ и стенограмма $M$, 
+которая представляет собой последовательность сообщений Handshake.
+%
+Выходными данными является подчиненный ключ~$Y\in\{0,1\}^n$.
+
+Должны соблюдаться следующие ограничения на входные данные:
+\begin{itemize}
+\item
+длина~$m$ не должна превосходить~$255n/8$;
+\item
+длина метки~$L$ в байтах должна лежать в диапазоне от~$1$ до~$249$;
+\item
+длина контекста~$C$ в байтах не должна превосходить~$255$.
+\end{itemize}
+
+Метки ключей кодируются строками ASCII с окаймлением двойными кавычками 
+(см.~\ref{DEFS}). В алгоритме \code{HKDF-Expand-Label} к меткам добавляется 
+префикс \str{tls13 }.
+
+\subsection{Алгоритм \code{HKDF-Extract}}\label{CRYPTO.HKDF.Extract}
+
+Вычисление $\code{HKDF-Extract}(X,S)$ выполняется следующим образом:
+
+\begin{enumerate}
+\item
+Если $S=\perp$, то $S\gets 0^n$.
+\item
+Установить~$K\gets\code{HMAC}(S,X)$.
+\item
+Возвратить~$K$.
+\end{enumerate}
+
+\subsection{Алгоритм \code{HKDF-Expand}}\label{CRYPTO.HKDF.Expand}
+
+Вычисление $\code{HKDF-Expand}(K,S,m)$ выполняется следующим образом:
+
+\begin{enumerate}
+\item
+Установить~$(Y,T)\gets(\perp,\perp)$ (пустые строки).
+\item
+Для $i=1,2,\ldots,\lceil 8m/n\rceil$:
+\begin{enumerate}
+\item
+$T\gets\code{HMAC}(K,T\parallel S\parallel\itob{i}_8)$;
+\item
+$Y\gets Y\parallel T$.
+\end{enumerate}
+\item
+Установить~$Y\gets\Lo(Y,8m)$.
+\item
+Возвратить~$Y$.
+\end{enumerate}
+
+\subsection{Алгоритм \code{HKDF-Expand-Label}}\label{CRYPTO.HKDF.Label}
+
+В алгоритме \code{HKDF-Expand-Label} используется структура данных \code{HkdfLabel}:
+\begin{codeblock}
+struct {
+  uint16 length;
+  opaque label<7..255>;
+  opaque context<0..255>;
+} HkdfLabel;
+\end{codeblock}
+
+Вычисление $\code{HKDF-Expand-Label}(K,L,C,m)$ выполняется следующим образом: 
+
+\begin{enumerate}
+\item
+Построить структуру \code{HkdfLabel}, заполнив ее поля следующим образом:
+\begin{enumerate}
+\item
+$\code{HkdfLabel.length}\gets m$;
+\item
+$\code{HkdfLabel.label}\gets \str{tls13 } \parallel L$;
+\item
+$\code{HkdfLabel.context}\gets C$.
+\end{enumerate}
+\item
+Установить~$Y\gets\code{HKDF-Expand}(K, \code{HkdfLabel}, m)$.
+\item
+Возвратить~$Y$.
+\end{enumerate}
+
+\subsection{Алгоритм \code{Derive-Secret}}\label{CRYPTO.HKDF.Derive}
+
+Вычисление $\code{Derive-Secret}(K,L,M)$ выполняется следующим образом: 
+%
+\begin{enumerate}
+\item
+Установить $H\gets\code{Transcript-Hash}(M)$.
+\item
+Установить~$Y\gets\code{HKDF-Expand-Label}(K,L,H,\code{hash_length})$.
+\item
+Возвратить~$Y$.
+\end{enumerate}
+

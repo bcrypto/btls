@@ -1,0 +1,52 @@
+\section{PSK-скрепки}\label{CRYPTO.Binder} 
+
+PSK-скрепка устанавливает связь между секретом PSK и текущим сеансом Handshake. 
+Если секрет был согласован в предыдущем соединении (с помощью 
+\token[HS.NST]{NewSessionTicket}), то дополнительно устанавливается связь с 
+этим соединением. 
+
+PSK-скрепки вычисляются при подготовке расширения 
+\token[HS.Ext.psk]{pre_shared_key} в момент отправки первого или повторного 
+сообщения \token[HS.CH]{ClientHello}. 
+%
+Расширение описывается типом~\code{OfferedPsks}, определенным 
+в~\ref{HS.Ext.psk}, и состоит из полей \code{identities} и \code{binders}.
+%
+Скрепки сохраняются в последнем поле.
+%
+Расширение \token[HS.Ext.psk]{pre_shared_key} является последним в списке 
+расширений \token[HS.CH]{ClientHello} и, следовательно, завершает сообщение.
+
+При вычислении PSK-скрепки используется текущая стенограмма Handshake. Она 
+заканчивается текущим сообщением \token[HS.CH]{ClientHello}: первым или 
+повторным.
+%
+Стенограмма сокращается: в расширении \token[HS.Ext.psk]{pre_shared_key} 
+завершающего \token[HS.CH]{ClientHello} исключается поле~\code{binders}.
+
+Сокращенная стенограмма хэшируется. В результате получается хэш-значение
+\begin{align*}
+H&\gets\code{Transcript-Hash}(\code{Truncate}(\code{ClientHello})),
+\intertext{если Handshake выполняется без перезапуска, и хэш-значение}
+H&\gets\code{Transcript-Hash}(\code{ClientHello},\code{HelloRetryRequest}, 
+\code{Truncate}(\code{ClientHello}_2)),
+\end{align*}
+если с перезапуском. 
+%
+Здесь \code{Truncate}~--- функция исключения \code{binders}, 
+$\code{ClientHello}_2$~--- повторное приветственное сообщение клиента.
+
+После определения $H$ скрепка \code{binder} вычисляется следующим образом:
+\begin{align*}
+\code{finished_key}&\gets\code{HKDF-Expand-Label}
+(\code{binder_key}, \str{finished}, \perp, \code{hash_length}),\\
+\code{binder}&\gets\code{HMAC}(\code{finished_key}, H).
+\end{align*}
+
+% skip: The full ClientHello1/ClientHello2 is included in all other handshake
+% hash computations.  Note that in the first flight, Truncate(ClientHello1) is 
+% hashed directly, but in the second flight, ClientHello1 is hashed and then 
+% reinjected as a message_hash message, as described in Section 4.4.1.  
+% Note that the message_hash will be hashed with the negotiated function, which 
+% may or may match the hash associated with the PSK.  This is consistent with 
+% how the transcript is calculated for the rest of the handshake.

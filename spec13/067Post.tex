@@ -1,0 +1,320 @@
+\section{Сообщения после Handshake}\label{HS.Post} 
+        
+\subsection{Сообщение \code{NewSessionTicket}}\label{HS.NST} 
+
+В сообщении \code{NewSessionTicket} сервер высылает клиенту билет, который
+ссылается на секрет, построенный по общему ключу 
+\code{resumption_master_secret} (см.~\ref{CRYPTO.Schedule}).
+%
+Используя \code{resumption_master_secret} и данные билета, клиент может 
+построить секрет самостоятельно и использовать его в будущих соединениях в 
+качестве PSK.
+
+В одном соединении сервер может отправить клиенту несколько билетов:
+последовательно друг за другом либо после определенных событий.
+%
+Например, сервер может отправлять билет после аутентификации клиента по 
+завершении Handshake, фиксируя факт аутентификации. 
+%
+Располагая несколькими билетами, клиент может открывать несколько параллельных 
+соединений с сервером.
+
+Сервер может отправить сообщение \code{NewSessionTicket} в любой момент после 
+получения сообщения \token[HS.F]{Finished} клиента при условии, что 
+\token[HS.CH]{ClientHello} содержит расширение 
+\token{psk_key_exchange_mode} (см.~\ref{HS.Ext.pkem}).
+
+% use: https://www.rfc-editor.org/errata/eid7003
+
+Сообщение \code{NewSessionTicket} защищается на ключе, построенном по 
+\code{server_application_traffic_secret} (см.~\ref{CRYPTO.Schedule}). 
+
+Клиент может использовать PSK, на который ссылается билет в 
+\code{NewSessionTicket}, для возобновления связи. Для этого клиент должен 
+включить билет в качестве идентификатора PSK в 
+расширение~\token{pre_shared_key} (см.~\ref{HS.Ext.psk}).
+%
+Если клиент не поддерживает возобновление связи, то он должен игнорировать 
+сообщение \code{NewSessionTicket}.
+
+% use: https://www.rfc-editor.org/errata/eid7250
+
+При возобновлении связи сервер должен принимать билет, только если он был 
+построен с помощью алгоритма хэширования текущего криптонабора.
+
+При использовании расширения \token[HS.Ext.sn]{server_name} клиенту
+не следует возобновлять связь, если билет был согласован в соединении с именем 
+сервера, которое отличается от текущего имена. 
+%
+% skip: The latter is a performance optimization: normally, there is no reason 
+% to expect that different servers covered by a single certificate would be 
+% able to accept each other's tickets; hence, attempting resumption in that 
+% case would waste a single-use ticket.
+%
+Однако клиент может возобновить связь, если он был проинформирован об изменении 
+имени сервера за пределами TLS.
+%
+Клиент не должен возобновлять связь, если текущее имя сервера не соответствует 
+данным в сертификате сервера, который был использован в первоначальном соединении.
+%
+Если при возобновлении связи требуется сообщить имя сервера прикладному 
+протоколу, то следует указать текущее имя, а не имя в первоначальном соединении.
+%
+% skip: Note that if a server implementation declines all PSK identities with 
+% different SNI values, these two values are always the same.
+
+Формат сообщения \code{NewSessionTicket} определяется одноименным типом:
+%
+\begin{codeblock}
+struct {
+  uint32 ticket_lifetime;
+  uint32 ticket_age_add;
+  opaque ticket_nonce<0..255>;
+  opaque ticket<1..2^16-1>;
+  Extension extensions<0..2^16-2>;
+} NewSessionTicket;
+\end{codeblock}
+
+Поля \code{NewSessionTicket} имеют следующее значение:
+
+\begin{itemize}
+\item
+\code{ticket_lifetime}~-- срок действия билета в секундах, начиная с момента 
+его выпуска.
+%
+% skip:  as a 32-bit unsigned integer in network byte order
+% * Задается 32-битовым беззнаковым целым, в котором старшие байты идут  
+%   первыми (сетевой порядок байтов, big-endian).
+%
+Срок действия не должен быть больше 604800 секунд (7 суток). Нулевое значение
+\code{ticket_lifetime} означает, что билет следует уничтожить немедленно 
+\doubt{после использования}.
+% 
+Клиент не должен использовать билет по прошествии 7 суток после его выпуска,
+независимо от значения, установленного в \code{ticket_lifetime}.
+%
+Срок действия билета может сокращаться относительно \code{ticket_lifetime}
+в соответствии с локальной политикой пользователя.
+%
+Сервер может аннулировать билет до окончания срока его действия; 
+
+% use: https://www.rfc-editor.org/errata/eid6142
+
+\item
+\code{ticket_age_add}~--- случайное 32-битовое число, которое используется для 
+зашумления времени жизни билета. Клиент получает зашумленное время жизни, 
+складывая актуальное время в миллисекундах с \code{ticket_age_add} по 
+модулю~$2^{32}$. Клиент высылает зашумленное время в расширении 
+\token{pre_shared_key} (см.~\ref{HS.Ext.psk}). При формировании  
+очередного билета сервер должен генерировать \code{ticket_age_add} заново;
+
+\item
+\code{ticket_nonce}~--- синхропосылка. Синхропосылки текущего соединения не 
+должны повторяться;
+
+\code{ticket}~--- билет. Выступает в роли идентификатор ассоциированного PSK. 
+Билетом может быть ключ базы данных или (аутентифицированный) шифртекст, 
+который проверяется при получении;
+
+% info: https://mailarchive.ietf.org/arch/msg/tls/2TGQGMbdjArgmG41gnb9LJ3W_TU/
+% info: https://datatracker.ietf.org/doc/html/rfc5077#section-4
+
+\code{extensions}~--- перечень расширений. Клиент должен игнорировать 
+нераспознанные расширения.
+\end{itemize}
+
+Настоящий стандарт разрешает включать в перечень
+\code{NewSessionTicket.extensions} только расширение  \token{early_data}
+(см.~\ref{HS.Ext.ed}). Включая расширение, сервер объявляет, что секрет, на
+который ссылается выпущенный билет, может использоваться в механизме
+\mbox{0-RTT}.
+
+В поле \code{max_early_data_size} расширения \token[HS.Ext.ed]{early_data} 
+сервер указывает, сколько байтов ранних прикладных данных разрешается передать 
+клиенту в рамках механизма \mbox{0-RTT}. 
+%
+Если сервер получает более \code{max_early_data_size} байтов ранних прикладных
+данных, то ему следует закрыть соединение с оповещением
+\token[ALERT.Err.um]{unexpected_message}.
+
+Лимит \code{max_early_data_size} не учитывает однобайтовый тип содержимого и 
+незначащие нулевые байты в \code{TLSInnerPlaintext} (см.~\ref{RECORD.Enc}).
+%
+Сервер может проверять соблюдение лимита, не снимая с данных защиту, и поэтому 
+клиенту не следует дополнять записи Record большим числом незначащих нулей.
+
+Секрет, связанный с билетом, вычисляется по правилам, установленным 
+в~\ref{CRYPTO.Resume}.
+
+\begin{note}
+Если сервер не запрашивает аутентификацию клиента по сертификату, то он может 
+выслать билет в~\token[HS.NST]{NewSessionTicket} сразу после своего 
+сообщения \token[HS.F]{Finished}.
+%
+Для этого сервер самостоятельно вычисляет сообщение 
+\token[HS.F]{Finished} клиента, определяет полную стенограмму Handshake, 
+строит по ней сначала ключ \code{resumption_master_secret}, а затем билет.
+\end{note}
+
+% skip: This might be appropriate in cases where the client is expected to open 
+% multiple TLS connections in parallel and would benefit from the reduced 
+% overhead of a resumption handshake, for example.
+
+% todo: security?
+
+\begin{note}
+Сформировав один раз общие общие ключи, сервер может продлевать 
+время их жизни, последовательно выпуская новые и новые билеты. 
+Рекомендуется контролировать и ограничивать время жизни такого ключевого 
+материала. 
+%
+В частности, если первоначальные ключи построены с использованием сертификатов, 
+то при контроле следует учитывать срок действия сертификатов,  
+возможность их отзыва. 
+\end{note}
+
+\subsection{Отложенная аутентификация}\label{HS.Post.Auth} 
+
+Если клиент отправил расширение \token{post_handshake_auth} 
+(см.~\ref{HS.Ext.pha}), то он может быть аутентифицирован не только в протоколе 
+Handshake, но и по его завершении.
+
+% use: https://www.rfc-editor.org/errata/eid6401
+
+Сервер запрашивает отложенную аутентификацию, отправляя сообщение 
+\token[HS.CR]{CertificateRequest}. 
+
+Клиент должен ответить сообщениями аутентификации (см.~\ref{HS.Auth}). 
+%
+Если клиент согласен аутентифицироваться, то он должен выслать сообщения
+\token[HS.CT]{Certificate}, \token[HS.CV]{CertificateVerify} и 
+\token[HS.F]{Finished}. 
+%
+Если клиент отказывается, то он должен выслать сообщение 
+\token[HS.CT]{Certificate}, которое не содержит сертификатов,
+а после него сообщение~\token[HS.F]{Finished}. 
+%
+Сообщения должны идти в оговоренном порядке и не должны перемежаться 
+сообщениями других типов.
+
+Сообщение \token[HS.CR]{CertificateRequest} и ответные сообщения клиента
+защищаются на ключах, построенных \code{server_application_traffic_secret}
+и \code{client_application_traffic_secret} соответственно
+(см.~\ref{CRYPTO.Schedule}). 
+
+Если клиент не отправлял расширение \token[HS.Ext.pha]{post_handshake_auth},
+но получил \token[HS.CR]{CertificateRequest} после Handshake, то он должен 
+закрыть соединение с оповещением \token[ALERT.Err.um]{unexpected_message}.
+
+Поскольку аутентификация клиента может включать запрос пользователю (владельцу 
+личного ключа), сервер должен быть готов к задержке между 
+\token[HS.CR]{CertificateRequest} и \token[HS.F]{Finished}.
+Во время задержки сервер может получать сообщения, не относящиеся к 
+аутентификации.
+%
+Кроме этого, порядок ответов клиента на несколько подряд идущих запросов 
+\token[HS.CR]{CertificateRequest} не обязательно совпадает с порядком запросов.
+%
+Синхропосылка \code{certificate_request_context} в 
+сообщениях~\token[HS.CR]{CertificateRequest} и \token[HS.CR]{Certificate}   
+помогает серверу связать запросы с ответами.
+
+% todo: Сообщения ответов (CT, CV, F) могут перемежаться друг с другом?
+% Если так, то как связать Finished и CerificateVerify, в которых нет 
+% certificate_request_context, с запросами?
+
+\subsection{Сообщение \code{KeyUpdate}}\label{HS.KU} 
+
+Сообщение \code{KeyUpdate} информирует об обновлении ключа защиты 
+отправляемых прикладных данных. Правила обновления определены 
+в~\ref{CRYPTO.Upd}. 
+
+Формат сообщения \code{KeyUpdate} описывается одноименным типом:
+%
+\begin{codeblock}
+enum {
+  update_not_requested(0), update_requested(1), (255)
+} KeyUpdateRequest;
+
+struct {
+  KeyUpdateRequest request_update;
+} KeyUpdate;
+\end{codeblock}
+
+В поле \code{request_update} отправитель сообщения информирует о 
+необходимости отправки встречного \code{KeyUpdate} или, другими словами,
+необходимости обновления ключа защиты принимаемых прикладных данных.
+%
+Значение \code{update_requested} означает необходимость отправки встречного 
+сообщения, значение \code{update_not_requested}~--- отсутствие необходимости.
+%
+Получатель должен закрыть соединение с оповещением 
+\token[ALERT.Err.um]{unexpected_message}, если в поле указано недопустимое 
+значение.
+
+Сообщение \code{KeyUpdate} может отправить любая сторона после
+того, как она выслала сообщение \token[HS.F]{Finished} и завершила,
+таким образом, Handshake. 
+%
+Если клиент или сервер получает \code{KeyUpdate} перед 
+\token[HS.F]{Finished}, то он должен закрыть соединение с оповещением 
+\token[ALERT.Err.um]{unexpected_message}. 
+
+После передачи \code{KeyUpdate} отправитель должен использовать обновленный ключ 
+защиты отправляемых прикладных данных. 
+%
+При этом само сообщение \code{KeyUpdate} защищается на необновленном ключе.
+%
+Стороны не должны принимать записи, защищенные на обновленном ключе, вплоть до 
+получения \code{KeyUpdate}, защищенного на необновленном.
+%
+% skip: Failure to do so may allow message truncation attacks.
+%
+Ключи защиты строятся по \code{server_application_traffic_secret} или 
+\code{client_application_traffic_secret}, в зависимости от того, 
+кто является отправителем (см.~\ref{CRYPTO.TKeys}).
+
+Если в поле \code{request_update} сообщения \code{KeyUpdate} указано значение 
+\code{update_requested}, то получатель должен ответить своим собственным
+\code{KeyUpdate} прежде чем отправлять прикладные данные. 
+%
+В поле \code{request_update} встречного \code{KeyUpdate} должно быть указано 
+значение \code{update_not_requested}.
+%
+Допустима ситуация, когда сторона получает несколько \code{KeyUpdate} с 
+запросом на встречное сообщение и отвечает только одним таким сообщением.
+%
+Сообщение \code{KeyUpdate} с запросом запрещено отправлять повторно до 
+получения искомого встречного \code{KeyUpdate}.
+
+\begin{note}
+После отправки \code{KeyUpdate} с запросом на встречное сообщение, сторона 
+может получить это сообщение не сразу, а после других сообщений, которые 
+находятся в процессе доставки. При этом в процессе доставки могут находиться 
+запаздывающие сообщения \code{KeyUpdate}, не связанные с отправленным.
+\end{note}
+
+% skip: However, because send and receive keys are derived from independent 
+% traffic secrets, retaining the receive traffic secret does not threaten the  
+% forward secrecy of data sent before the sender changed keys.
+
+\begin{note}
+Если стороны независимо одновременно отправляют друг друг сообщения 
+\code{KeyUpdate} с запросами на встречные сообщения, то, ответив на запросы, 
+каждая сторона в конце концов обновит ключ отправляемых ею данных дважды.
+\end{note}
+
+% skip: With a 128-bit key as in AES-128, rekeying 2^64 times has a high
+% probability of key reuse within a given connection.  Note that even
+% if the key repeats, the IV is also independently generated, so the
+% chance of a joint key/IV collision is much lower.  In order to
+% provide an extra margin of security, sending implementations MUST NOT
+% allow the epoch -- and hence the number of key updates -- to exceed
+% 2^48-1.  In order to allow this value to be changed later -- for
+% instance for ciphers with more than 128-bit keys -- receiving
+% implementations MUST NOT enforce this rule.  If a sending
+% implementation receives a KeyUpdate with request_update set to
+% "update_requested", it MUST NOT send its own KeyUpdate if that would
+% cause it to exceed these limits and SHOULD instead ignore the
+% "update_requested" flag.  This may result in an eventual need to
+% terminate the connection when the limits in Section 5.5 are reached.

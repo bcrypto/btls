@@ -1,0 +1,62 @@
+\section{Другие ключи и секреты}\label{CRYPTO.Other}
+
+\subsection{Экспортеры}\label{CRYPTO.Exp}
+
+По завершении TLS стороны могут продолжить использовать общий ключевой материал 
+с помощью экспортеров. Экспортер~--- это ключ, который строится по специальному 
+общему ключу, согласованному сторонами в Handshake. Экспортер характеризуется 
+меткой и строится с учетом определенного контекста. Изменяя метку или контекст, 
+можно получить семейство экспортеров. При раскрытии одного из представителей 
+семейства сохраняется секретность как исходного ключа, так и других 
+представителей.
+
+Алгоритм построения экспортера принимает на вход ключ~$K$, метку 
+$L\in\{0,1\}^{8*}$, контекст~$C\in\{0,1\}^{8*}$ и натуральное~$m$~---
+длину экспортера в байтах. Алгоритм возвращает экспортер~$Y\in\{0,1\}^{8m}$. 
+%
+В качестве~$K$ должен использоваться один из
+ключей~\code{early_exporter_master_secret} или~\code{exporter_master_secret}
+(см. таблицу~\ref{Table.CRYPTO.Schedule}). 
+
+Шаги алгоритма:
+\begin{enumerate}
+\item
+Установить $H\gets\code{Hash}(C)$.
+\item
+Установить $R\gets\code{Derive-Secret}(K,L,\perp)$.
+\item
+Установить $Y\gets\code{HKDF-Expand-Label}(R,\str{exporter}, H, m)$.
+\item
+Возвратить $Y$.
+\end{enumerate}
+
+При вызовах \code{Derive-Secret} и \code{HKDF-Expand-Label} должны соблюдаться 
+ограничения этих алгоритмов (см.~\ref{CRYPTO.HKDF.IFace}). В частности длина 
+метки~$L$ в байтах не должна превышать~249. Дополнительные ограничения на  
+метки экспортеров установлены в~\cite{RFC5705}.
+
+При выборе исходного ключа~$K$ стороны должны отдавать предпочтение 
+\code{exporter_master_secret}, если иное не оговорено явно.
+%
+Ключ~\code{early_exporter_master_secret} введен для того, чтобы иметь 
+возможность строить экспортеры на ранней стадии (в механизме 0-RTT), 
+когда \code{exporter_master_secret} еще не сформирован.
+%
+В реализациях TLS рекомендуется выносить построение ранних экспортеров
+в отдельный сервис.
+
+\subsection{Секреты для возобновления связи}\label{CRYPTO.Resume}
+
+Секрет для возобновления связи строится по ключу 
+\code{resumption_master_secret} и синхропосылке \code{ticket_nonce},  
+включенной в сообщение \token{NewSessionTicket} (см.~\ref{HS.NST}).
+
+Секретом является следующее значение:
+%
+\begin{align*}
+\code{HKDF-Expand-Label}(&\code{resumption_master_secret},\str{resumption},\\
+&\code{ticket_nonce}, \code{hash_length}).
+\end{align*}
+
+% skip: Because the ticket_nonce value is distinct for each NewSessionTicket 
+% message, a different PSK will be derived for each ticket.

@@ -1,0 +1,1274 @@
+\section{Расширения}\label{HS.Ext} 
+
+\subsection{Назначение и перечень}\label{HS.Ext.List} 
+
+С помощью расширений клиент и сервер согласовывают параметры, обмениваются 
+ключевым материалом.
+%
+Расширение представляет собой структуру типа \code{Extension}, который 
+определяется следующим образом:
+%
+\begin{codeblock}
+struct {
+  ExtensionType extension_type;
+  opaque extension_data<0..2^16-1>;
+} Extension;
+\end{codeblock}
+
+Поля \code{Extension} имеют следующее значение:
+\begin{itemize}
+\item
+\code{extension_type}~--- тип расширения;
+\item
+\code{extension_data}~--- данные расширения, определяемые в зависимости от типа.
+\end{itemize}
+
+Вложенный тип \code{ExtensionType} определяется следующим образом:
+\begin{codeblock}
+enum {
+  server_name(0),
+  max_fragment_length(1),
+  status_request(5),
+  supported_groups(10),
+  signature_algorithms(13),
+  use_srtp(14),
+  heartbeat(15),
+  application_layer_protocol_negotiation(16),
+  signed_certificate_timestamp(18),
+  client_certificate_type(19),
+  server_certificate_type(20),
+  padding(21),
+  pre_shared_key(41),
+  early_data(42),
+  supported_versions(43),
+  cookie(44),
+  psk_key_exchange_modes(45),
+  certificate_authorities(47),
+  oid_filters(48),
+  post_handshake_auth(49),
+  signature_algorithms_cert(50),
+  key_share(51),
+  (65535)
+} ExtensionType;
+\end{codeblock}
+
+Большинство расширений имеют две формы: запрос и ответ.
+%
+Имеются расширения информационного характера, которые не предполагают ответа.
+%
+Запрос клиента отправляется в сообщении \token[HS.CH]{ClientHello}, 
+соответствующий ответ сервера~--- в \token[HS.SH]{ServerHello}, 
+\token[HS.EE]{EncryptedExtensions}, \token[HS.HRR]{HelloRetryRequest} или 
+\token[HS.CT]{Certificate}.
+%
+В обратную сторону, запрос сервера отправляется в 
+\token[HS.CR]{CertificateRequest}, клиент может дать на него ответ в 
+\token[HS.CT]{Certificate}.
+%
+Сервер может отправить расширение, не предполагающее ответа, 
+в~\token[HS.NST]{NewSessionTicket}.
+
+Сторона TLS не должна отправлять расширение-ответ, если не получено
+расширение-запрос. При получении ответа без запроса протокол Handshake должен 
+быть прерван с оповещением \token[ALERT.Err.um]{unexpected_message}.
+Исключением из данного правила является отправка расширения 
+\token[HS.Ext.c]{cookie} в сообщении \token[HS.HRR]{HelloRetryRequest} 
+(см.~\ref{HS.Ext.c}).
+%
+В таблице~\ref{Table.HS.Exts} перечислены расширения TLS версии 1.3.
+Часть расширений вводится в настоящем стандарте, остальные~--- 
+в спецификациях, ссылки на которые даны в квадратных скобках.
+В таблице~\ref{Table.HS.Exts} указаны сообщения Handshake, в которых 
+расширения пересылаются. 
+%
+Использованы сокращения: 
+CH~--- \token[HS.CH]{ClientHello},
+SH~--- \token[HS.SH]{ServerHello},
+EE~--- \token[HS.EE]{EncryptedExtensions}, 
+CT~--- \token[HS.CT]{Certificate},
+CR~--- \token[HS.CR]{CertificateRequest}, 
+NST~--- \token[HS.NST]{NewSessionTicket} и
+HRR~--- \token[HS.HRR]{HelloRetryRequest}. 
+%
+Расширения перечисляются в порядке возрастания их типов
+в~\code{ExtensionType}.
+
+Следующие расширения не вводятся в настоящем стандарте, но учитываются при 
+определении механизмов TLS.
+
+\begin{enumerate}
+\item\label{HS.Ext.sn}
+В расширении \code{server_name} клиент передает имя сервера, с которым он 
+собирается взаимодействовать. Имя учитывается при выборе сертификата для 
+аутентификации. Расширение оказывается полезным в ситуации, когда один 
+TLS-сервер обслуживает несколько подчиненных прикладных серверов (возможно  
+виртуальных).
+
+% info: https://security.stackexchange.com/questions/269301
+
+\item\label{HS.Ext.mfl}
+Расширение \code{max_fragment_length} используется для согласования
+максимальной длины фрагментов данных при их передаче по протоколу Record.
+
+\item\label{HS.Ext.alpn}
+Расширение \code{application_layer_protocol_negotiation} используется  
+для согласования прикладного протокола, который будет выполняться поверх TLS.
+
+\item\label{HS.Ext.ct}
+Расширения \code{client_certificate_type} и \code{server_certificate_type} 
+используются для согласования типа сертификата для аутентификации соответственно 
+клиента и сервера. Поддерживаются два типа сертификатов: обычные сертификаты 
+X.509, определенные в СТБ 34.101.19, и контейнеры типа 
+\code{SubjectPublicKeyInfo} АСН.1, также определенного в СТБ 34.101.19. 
+%
+Контейнер содержит открытый ключ, но не содержит ни идентификационных данных, 
+ни срока действия, ни подписи УЦ. Обмен открытыми ключами в облегченных 
+контейнерах востребован в некоторых сценариях использования TLS 
+(см.~\cite{RFC7250}).
+
+\item\label{HS.Ext.p}
+Расширение \code{padding} используется для искусственного увеличения размера 
+сообщения \token[HS.CH]{ClientHello} через включение в расширение незначащих
+нулевых байтов.
+%
+Известны реализации TLS, которые некорректно обрабатывают
+\token[HS.CH]{ClientHello} определенных длин. Увеличение размера сообщений
+помогает избежать ошибок при выполнении TLS с такими реализациями.
+\end{enumerate}
+
+\begin{table}[hbt]
+\caption{Расширения}\label{Table.HS.Exts}
+\begin{tabular}{|l|c|l|}
+\hline
+Расширение & Определение & Сообщения Handshake\\
+\hline
+\hline
+\code|server_name| & \cite{RFC6066} & 
+CH, EE\\ 
+%
+\code|max_fragment_length| & \cite{RFC6066} & 
+CH, EE\\ 
+%
+\code|status_request| & \ref{HS.Ext.sr} & 
+CH, CR, CT\\ 
+% todo: \cite{RFC6066}?
+%
+\code|supported_groups| & \ref{HS.Ext.sg} & 
+CH, EE\\ 
+% todo: \cite{RFC7919}?
+%
+\code|signature_algorithms| & \ref{HS.Ext.sa} &
+CH, CR\\ 
+%
+\code|use_srtp| & \cite{RFC5764} & 
+CH, EE\\ 
+%
+\code|heartbeat| & \cite{RFC6520} & 
+CH, EE\\ 
+%
+\code|application_layer_protocol_negotiation| & \cite{RFC7301} & 
+CH, EE\\ 
+%
+\code|signed_certificate_timestamp| & \cite{RFC6962} & 
+CH, CR, CT\\ 
+%
+\code|client_certificate_type| & \cite{RFC7250} & 
+CH, EE\\ 
+%
+\code|server_certificate_type| & \cite{RFC7250} & 
+CH, EE\\ 
+%
+\code|padding| & \cite{RFC7685} & 
+CH\\ 
+%
+\code|key_share| & \ref{HS.Ext.ks} &
+CH, SH, HRR\\ 
+%
+\code|pre_shared_key| & \ref{HS.Ext.psk} &
+CH, SH\\ 
+%
+\code|psk_key_exchange_modes| & \ref{HS.Ext.pkem} &
+CH\\ 
+%
+\code|early_data| & \ref{HS.Ext.ed} &
+CH, EE, NST\\ 
+%
+\code|cookie| & \ref{HS.Ext.c} &
+CH, HRR\\ 
+%
+\code|supported_versions| & \ref{HS.Ext.sv} &
+CH, SH, HRR\\ 
+%
+\code|certificate_authorities| & \ref{HS.Ext.ca} &
+CH, CR\\
+%
+\code|oid_filters| & \ref{HS.Ext.of} &
+CR\\ 
+%
+\code|post_handshake_auth| & \ref{HS.Ext.pha} &
+CH\\ 
+%
+\code|signature_algorithms_cert| & \ref{HS.Ext.sa} &
+CH, CR\\ 
+\hline
+\end{tabular}
+\end{table}
+
+Если сторона получает расширение в непредназначенном для него сообщении,
+то она должна прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter}. 
+
+Если сообщение содержит несколько расширений, то они могут идти в любом 
+порядке. Исключение составляет расширение \token[HS.Ext.psk]{pre_shared_key}, 
+которое должно быть последним в \token[HS.CH]{ClientHello} (хотя может 
+находиться в произвольном месте списка расширений \token[HS.SH]{ServerHello}).
+
+Согласование параметров с помощью расширений выполняется в каждом сеансе 
+Handshake, в том числе при возобновлении связи. 
+%
+Однако параметры секрета, который будет использоваться в механизме 0-RTT, 
+изменить нельзя~--- они были согласованы в предыдущем соединении. При 
+несоответствии параметров секрета параметрам текущего соединения механизм 0-RTT 
+может быть отменен (см.~\ref{HS.Ext.ed}).
+
+Перечень расширений может расширяться. При разработке новых расширений 
+следует учитывать следующее:
+
+\begin{itemize}
+\item
+сервер может не принять расширение, предложенное клиентом, как из-за ошибки, 
+так и просто отказав в поддержке определенных функциональных возможностей. 
+В первом случае следует прерывать Handshake с критическим оповещением, во 
+втором~--- объяснять отказ в ответной части расширения;
+\item
+вплоть до завершения Handshake противник может манипулировать сообщениями 
+протокола, вставляя, удаляя или перемещая расширения. Расширения следует 
+проектировать так, чтобы противник не мог навязать использование (или наоборот 
+отключение) определенных функциональных возможностей TLS. 
+\end{itemize}
+
+\subsection{Расширение \code{supported_versions}}\label{HS.Ext.sv} 
+
+Клиент использует расширение \code{supported_versions} для информирования о 
+поддерживаемых версиях TLS, сервер~--- для информирования о выбранной версии. 
+
+Данные расширения \code{supported_versions} описываются типом 
+\code{SupportedVersions}, который определяется следующим образом:
+
+\begin{codeblock}
+struct {
+  select (Handshake.msg_type) {
+    case client_hello:
+      ProtocolVersion versions<2..254>;
+    case server_hello: /* and HelloRetryRequest */
+      ProtocolVersion selected_version;
+  };
+} SupportedVersions;
+\end{codeblock}
+
+В поле \code{versions} клиент перечисляет поддерживаемые версии в порядке 
+убывания предпочтения. Сервер указывает выбранную версию в 
+\code{selected_version}.
+
+Клиент должен включить расширение \code{supported_versions} в сообщение 
+\token[HS.CH]{ClientHello}, указав в расширении список версий TLS, которые он 
+готов использовать. Версия 1.3, представленная числом \code{0x0304}, должна 
+входить в список.
+
+Если сервер получил \token[HS.CH]{ClientHello} без расширения 
+\code{supported_versions} и если сервер поддерживает TLS версии 1.2, то 
+для согласования версии он должен использовать схему, заданную в СТБ 34.101.65. 
+%
+Данное правило действует и тогда, когда поле \code{ClientHello.legacy_version} 
+содержит значение \code{0x0304} или больше, т.~е. клиент предлагает 
+использовать TLS версии 1.3 или выше, и при этом не отправляет 
+\code{supported_versions}.
+%
+Сервер может прервать Handshake, если поле \code{ClientHello.legacy_version} 
+содержит значение \code{0x0304} или больше.
+
+Если сервер получил \token[HS.CH]{ClientHello} с расширением
+\code{supported_versions}, то он должен игнорировать
+\code{ClientHello.legacy_version} и при выборе версии использовать 
+исключительно расширение. Сервер должен выбирать из версий, перечисленных в 
+расширении, и при этом игнорировать версии, которые ему неизвестны,
+\doubt{а также версии ниже 1.2}.
+%
+Допускается, что будет выбрана версия 1.2.
+%
+Сервер должен быть готов к обработке сообщения \token[HS.CH]{ClientHello}, в 
+расширении~\code{supported_versions} которого отсутствует версия \code{0x0304}. 
+
+Если сервер выбрал версию 1.2, то он должен указать эту версию в поле 
+\code{ServerHello.version} и не должен включать в \token[HS.SH]{ServerHello} 
+расширение \code{supported_versions}.
+%
+Если сервер выбрал версию 1.3, то расширение должно быть включено и в нем 
+должна быть указана выбранная версию (\code{0x0304}). Кроме этого, сервер 
+должен установить в \code{ServerHello.legacy_version} значение \code{0x0303} 
+(TLS 1.2).
+
+Клиент должен проверять наличие \code{supported_versions} в 
+\token[HS.SH]{ServerHello}. Если расширение присутствует, то клиент должен 
+игнорировать \code{ServerHello.legacy_version} и при определении версии 
+использовать исключительно расширение. Если в расширении указана версия ниже 
+1.3 или версия, которую клиент не предлагал, то клиент должен прервать 
+Handshake с оповещением \token[ALERT.Err.ip]{illegal_parameter}.
+
+При перезапуске Handshake сервер должен проинформировать о выборе версии в
+сообщении \token[HS.HRR]{HelloRetryRequest} точно так же, как он это делает в
+\token[HS.SH]{ServerHello}.
+
+% todo: перечитать
+
+\subsection{Расширение \code{cookie}}\label{HS.Ext.c}
+
+Куки (cookie)~--- это данные, которые сервер отправляет клиенту на хранение. 
+%
+В куки сервер передает клиенту состояние, избегая необходимости хранить 
+его самостоятельно.
+%
+Кроме этого, сервер может проверить достижимость сетевого адреса клиента 
+(защита от атак <<отказ в обслуживании>>), предлагая тому возвратить присланные 
+куки.
+
+Данные расширения \code{cookie} описываются типом \code{Cookie}, который 
+определяется следующим образом:
+
+\begin{codeblock}
+struct {
+  opaque cookie<1..2^16-1>;
+} Cookie;
+\end{codeblock}
+
+В поле \code{cookie} содержатся куки.
+
+Сервер может отправить расширение \code{cookie} в сообщении
+\token[HS.HRR]{HelloRetryRequest}. 
+%
+После получения \token[HS.HRR]{HelloRetryRequest} с расширением \code{cookie} 
+клиент должен перенести расширение в повторное сообщение 
+\token[HS.CH]{ClientHello}.
+%
+Клиент не должен включать расширение в первое сообщение 
+\token[HS.CH]{ClientHello} в последующих соединениях с сервером.
+
+\begin{note}
+Отправка \code{cookie} в \token[HS.HRR]{HelloRetryRequest} является исключением 
+из общего правила, согласно которому сервер может отправлять клиенту только те 
+расширения, которые были включены в \token[HS.CH]{ClientHello}
+(см.~\ref{HS.Ext.List}).
+\end{note}
+
+Сервер может указать в \code{cookie} хэш-значение первого сообщения
+\token[HS.CH]{ClientHello}. Получив повторное \token[HS.CH]{ClientHello},
+сервер реконструирует первое, вычисляет его хэш-значение и сравнивает с 
+хэш-значением, указанным в \code{cookie}. При такой схеме взаимодействия 
+серверу не нужно поддерживать состояние соединения с клиентом и хранить в нем 
+первое \token[HS.CH]{ClientHello}.
+
+% info: https://mailarchive.ietf.org/arch/msg/tls/7rLQEHrqKaYo7u31iNBNsPI_OVg/
+
+\begin{note}
+Если сервер не хранит состояние, то он не может отличить 
+первое сообщение \token[HS.CH]{ClientHello} от повторного. Между этими 
+сообщениями сервер может получить незащищенную запись типа 
+\code{change_cipher_spec}. Сервер без состояния должен игнорировать эту запись 
+(см.~\ref{RECORD.Rec}).
+\end{note}
+
+\subsection{Расширения \code{signature_algorithms} и 
+\code{signature_algorithms_cert}}\label{HS.Ext.sa} 
+
+Клиент и сервер используют расширения \code{signature_algorithms} и 
+\code{signature_algorithms_cert} для информирования о поддерживаемых алгоритмах 
+ЭЦП. Первое расширение касается подписи в сообщении 
+\token[HS.CV]{CertificateVerify}, второе~--- подписей сертификатов.
+
+Данные расширений \code{signature_algorithms} и 
+\code{signature_algorithms_cert} описываются типом \code{SignatureSchemeList}, который 
+определяется следующим образом:
+
+\begin{codeblock}
+struct {
+  SignatureScheme supported_signature_algorithms<2..2^16-2>;
+} SignatureSchemeList;
+\end{codeblock}
+
+В поле \code{supported_signature_algorithms} перечисляются идентификаторы 
+алгоритмов ЭЦП в порядке убывания предпочтения.
+
+Идентификаторы описываются типом \code{SignatureScheme}, который определяется 
+следующим образом:
+
+\begin{codeblock}
+enum { (0xFFFF) } SignatureScheme;
+\end{codeblock}
+
+В~\cite{RFC8446} в~\code{SignatureScheme} включены идентификаторы некоторых
+алгоритмов ЭЦП. Дополнительные идентификаторы включаются в~\ref{BSUITES.DS}.
+
+Если аутентификация сервера проводится по его сертификату, т.~е. основана на 
+проверке владения соответствующим личным ключом, то клиент должен включить 
+\code{signature_algorithms} в сообщение \token[HS.CH]{ClientHello}.
+%
+Аналогичным образом, если сервер запрашивает аутентификацию клиента по 
+сертификату, высылая тому сообщение \token[HS.CR]{CertificateRequest}, то это 
+сообщение должно содержать расширение~\code{signature_algorithms}.
+
+Если сторона аутентифицируется по сертификату, но не получила 
+\code{signature_algorithms} в \token[HS.CH]{ClientHello} или 
+\token[HS.CR]{CertificateRequest}, то она должна прервать  
+Handshake с оповещением~\token[ALERT.Err.me]{missing_extension}.
+
+Открытый ключ сертификата, который используется для аутентификации, должен 
+соответствовать одному из алгоритмов, указанному 
+в~\code{signature_algorithms}. 
+
+Расширение~\code{signature_algorithms} может сопровождаться 
+расширением~\code{signature_algorithms_cert}. В последнем расширении 
+перечисляются алгоритмы, с помощью которых проверяются подписи в цепочке 
+сертификатов аутентифицирируемой стороны. Если 
+расширение~\code{signature_algorithms_cert} опущено, то перечень алгоритмов   
+определяется по~\code{signature_algorithms}. 
+
+Алгоритмы проверки подписей в цепочке сертификатов должны входить в 
+перечень~\code{signature_algorithms_cert} или, если это расширение опущено,  
+в перечень~\code{signature_algorithms}. 
+%
+Требование не распространяется на начальные сертификаты цепочек (точки доверия, 
+как правило, корневые сертификаты), подписи которых могут не проверяться.
+
+\subsection{Расширение \code{certificate_authorities}}\label{HS.Ext.ca} 
+
+Расширение \code{certificate_authorities} используется для информирования
+об УЦ, которым отправитель доверяет. Получателю следует учитывать 
+информацию при выборе сертификата для аутентификации.
+
+Данные расширения \code{certificate_authorities} описываются типом 
+\code{CertificateAuthorities}, который определяется следующим образом:
+
+\begin{codeblock}
+opaque DistinguishedName<1..2^16-1>;
+
+struct {
+  DistinguishedName authorities<3..2^16-1>;
+} CertificateAuthoritiesExtension;
+\end{codeblock}
+
+В поле \code{authorities} указывается список имен доверенных УЦ. Имя 
+описывается типом~\code{Name} АСН.1, который определен в СТБ 34.101.19,
+и кодируется по правилам~DER.
+%
+В качестве доверенного УЦ может указываться как корневой центр (точка 
+доверия), так и промежуточный.
+
+Клиент может отправить расширение \code{certificate_authorities}
+в сообщении~\token[HS.CH]{ClientHello}, сервер~---
+в сообщении~\token[HS.CR]{CertificateRequest}. 
+
+\subsection{Расширение \code{oid_filters}}\label{HS.Ext.of} 
+
+В расширении \code{oid_filters} сервер указывает требования к сертификатам, 
+которые используются для аутентификации перед ним. Требования касаются 
+расширений сертификатов, определенных в СТБ 34.101.19, 
+и формулируются в виде пар <<идентификатор расширения~--- 
+требуемое содержание>>.
+
+Данные расширения \code{oid_filters} описываются типом 
+\code{OIDFilterExtension}, который определяется следующим образом: 
+
+\begin{codeblock}
+struct {
+  opaque certificate_extension_oid<1..2^8-1>;
+  opaque certificate_extension_values<0..2^16-1>;
+} OIDFilter;
+
+struct {
+  OIDFilter filters<0..2^16-1>;
+} OIDFilterExtension;
+\end{codeblock}
+
+В поле \code{filters} указывается список элементов типа \code{OIDFilter}. 
+%
+Каждый элемент касается отдельного расширения сертификата и состоит из двух 
+полей:
+\begin{itemize}
+\item
+\code{certificate_extension_oid}~--- идентификатор расширения.
+Описывается типом <<идентификатор объекта>> (OBJECT IDENTIFIER) АСН.1;
+
+\item
+\code{certificate_extension_values}~--- список требуемых значений расширения.
+Определяется в соответствии со спецификацией расширения в СТБ 34.101.19.
+\end{itemize}
+
+Оба поля кодируются по правилам DER.
+
+Если сервер использует расширение~\code{oid_filters}, то он должен 
+включить его в сообщение~\token[HS.CR]{CertificateRequest}. 
+%
+Идентификаторы расширений сертификата в~\code{oid_filters} не должны 
+повторяться.
+
+Если сервер включил~\code{oid_filters} в~\token[HS.CR]{CertificateRequest}, то 
+ответный сертификат клиента должен содержать все расширения, перечисленные
+в~\code{oid_filters} и распознаваемые клиентом.
+%
+В этих расширениях должны присутствовать все требуемые значения.
+%
+Клиент должен игнорировать перечисленные в~\code{oid_filters} расширения 
+сертификатов, идентификаторы которых он не распознал.
+%
+Если клиент проигнорировал некоторые расширения сертификатов и представил 
+сертификат, который не полностью соответствует требованиям~\code{oid_filters}, 
+то сервер может либо продолжить Handshake без аутентификации клиента, либо 
+прервать протокол с оповещением \token[ALERT.Err.uc]{unsupported_certificate}.
+
+Способ проверки требований к расширению сертификата меняется в зависимости от 
+типа расширения. В настоящем стандарте определяются правила проверки следующих 
+расширений.
+
+\begin{enumerate}
+\item
+Расширение \code{KeyUsage} в сертификате клиента соответствует 
+требованиям~\code{oid_filters}, если каждый бит назначения ключа, установленный 
+в~\code{oid_filters}, установлен также в сертификате.
+\item
+Расширение \code{ExtKeyUsage} (название в соответствии с СТБ 34.101.78) в 
+сертификате клиента соответствует требованиям~\code{oid_filters}, если каждый 
+идентификатор области применения, указанный в~\code{oid_filters}, указан также 
+в сертификате.
+%
+В~\code{oid_filters} не должен указываться идентификатор 
+\code{anyExtendedKeyUsage}.
+\end{enumerate}
+
+За пределами настоящего стандарта могут устанавливаться 
+правила проверки требований к другим расширениям сертификата. 
+
+\subsection{Расширение \code{status_request}}\label{HS.Ext.sr} 
+
+Расширение \code{status_request} используется для проверки статуса сертификата, 
+используемого для аутентификации. Статус проверяется с помощью протокола 
+OCSP, установленного в СТБ 34.101.26.
+
+Данные расширения \code{status_request} описываются типом 
+\code{StatusRequestExtension}, который определяется следующим образом: 
+
+\begin{codeblock}
+enum { ocsp(1), (255) } CertificateStatusType;
+
+opaque ResponderID<1..2^16-1>;
+opaque Extensions<0..2^16-1>;
+
+struct {
+  ResponderID responder_id_list<0..2^16-1>;
+  Extensions request_extensions;
+} OCSPStatusRequest;
+
+struct {
+  CertificateStatusType status_type = ocsp;
+  OCSPStatusRequest request;
+} CertificateStatusRequest;
+
+opaque OCSPResponse<1..2^24-1>;
+
+struct {
+  CertificateStatusType status_type = ocsp;
+  OCSPResponse response;
+} CertificateStatus;
+
+struct {} Empty;
+
+struct {
+  select (Handshake.msg_type) {
+    case client_hello:
+      CertificateStatusRequest request;
+    case certificate_request: Empty;
+    case certificate:
+      CertificateStatus status;
+  };
+} StatusRequestExtension;
+\end{codeblock}
+
+Вложенный тип \code{OCSPStatusRequest} описывает OCSP-запросы,
+тип \code{OCSPResponse}~--- OCSP-ответ.
+%
+Поля\code{OCSPStatusRequest} имеют следующее значение:
+%
+\begin{itemize}
+\item
+\code{responder_id_list}~--- список имен доверенных OCSP-серверов. Пустой 
+список означает, что доверенные OCSP-серверы неявно известны, например, 
+предварительно согласованы;
+\item
+\code{request_extensions}~--- OCSP-запросы.
+\end{itemize}
+
+OCSP-серверы, запросы и ответы описываются типами~\code{ResponderID}, 
+\code{OCSPRequest} и \code{OCSPResponse} АСН.1, определенными в СТБ~34.101.26.
+%
+Данные АСН.1 кодируются по правилам DER.
+
+Если клиент использует расширение \code{status_request}, то он должен 
+включить его в сообщение \token[HS.CH]{ClientHello}.
+
+Получив расширение \code{status_request}, сервер в 
+сообщении~\token[HS.CT]{Certificate} вместе со своим сертификатом 
+может выслать OCSP-ответ со сведениями о его статусе.
+%
+Для этого сервер формирует расширение \code{status_request} с OCSP-ответом 
+и включает его в перечень расширений своего сертификата.
+%
+При подготовке OCSP-ответа серверу следует использовать сведения 
+в присланном расширении \code{status_request}: перечни OCSP-серверов и 
+OCSP-запросов. 
+
+% info: https://mailarchive.ietf.org/arch/msg/tls/CB5_f1s4i3KAJDk1ZmOR2zeDIOg/
+% * the status_request TLS extension doesn't provide a mechanism for stapling 
+%   OCSP for intermediate certs
+
+Сервер может запросить статус сертификата клиента, включив пустое расширение 
+\code{status_request} в сообщение \token[HS.CR]{CertificateRequest}.
+%
+Получив запрос, клиент в сообщении~\token[HS.CT]{Certificate} вместе со 
+своим сертификатом может выслать расширение \code{status_request} с 
+OCSP-ответом о статусе сертификата.
+
+\subsection{Расширение \code{post_handshake_auth}}\label{HS.Ext.pha} 
+
+Расширение \code{post_handshake_auth} используется для информирования о том,
+что клиент готов выполнить аутентификацию после Handshake 
+(см.~\ref{HS.Post.Auth}). 
+
+Расширение \code{post_handshake_auth} не содержит данные. Формально данные 
+описываются пустым типом \code{PostHandshakeAuth}: 
+
+\begin{codeblock}
+struct {} PostHandshakeAuth;
+\end{codeblock}
+
+Если клиент использует расширение \code{post_handshake_auth}, то он должен 
+включить его в сообщение \token[HS.CH]{ClientHello}.
+%
+Если сервер получил \token[HS.CH]{ClientHello} без расширения, то он
+не должен отправлять клиенту сообщение \token[HS.CR]{CertificateRequest} 
+по завершении Handshake. 
+
+Сервер не должен отправлять расширение \code{post_handshake_auth}.
+
+\subsection{Расширение \code{supported_groups}}\label{HS.Ext.sg} 
+
+В расширении \code{supported_groups} отправитель перечисляет циклические 
+группы, которые он может использовать в протоколе Диффи~-- Хеллмана.
+
+Данные расширения \code{supported_groups} описываются типом 
+\code{NamedGroupList}, который определяется следующим образом: 
+%
+\begin{codeblock}
+struct {
+  NamedGroup named_group_list<2..2^16-2>;
+} NamedGroupList;
+\end{codeblock}
+
+% use: https://www.rfc-editor.org/errata/eid8411
+
+В поле \code{named_group_list} указываются имена поддерживаемых групп
+в порядке убывания предпочтения.
+
+Имена групп описываются типом \code{NamedGroup}, который определяется 
+следующим образом:
+
+\begin{codeblock}
+enum { (0xFFFF) } NamedGroup;
+\end{codeblock}
+
+В~\cite{RFC8446} в~\code{NamedGroup} включены имена некоторых групп. 
+Дополнительные имена включаются в~\ref{BSUITES.Groups}. 
+
+Клиент включает расширение \code{supported_groups} в сообщение 
+\token[HS.CH]{ClientHello}, если он планирует использовать протокол 
+Диффи~-- Хеллмана (режим DHE, см.~\ref{HS.Negot}) для формирования общих 
+ключей.
+
+Сервер может включить расширение \code{supported_groups} в сообщение
+\token[HS.EE]{EncryptedExtensions}. Клиент не должен использовать сведения
+в расширении сервера вплоть до завершения сеанса Handshake, но может использовать 
+их в следующих сеансах для выбора групп в своих расширениях 
+\token[HS.Ext.ks]{key_share}.
+%
+Если у сервера есть более предпочтительные группы, нежели те, что указаны в  
+\token[HS.Ext.ks]{key_share} клиента, то серверу следует выслать 
+расширение \code{supported_groups}, проинформировав тем самым клиента о своих 
+предпочтениях. При этом серверу следует указать в \code{supported_groups} все 
+поддерживаемые группы, независимо от того, поддерживаются они клиентом или нет. 
+
+\subsection{Расширение \code{key_share}}\label{HS.Ext.ks} 
+
+Расширение \code{key_share} содержит данные обмена между сторонами
+в процессе выполнения протокола Диффи~-- Хеллмана.
+
+Единица данных описывается типом \code{KeyShareEntry}, который определяется 
+следующим образом:
+%
+\begin{codeblock}
+struct {
+  NamedGroup group;
+  opaque key_exchange<1..2^16-1>;
+} KeyShareEntry;
+\end{codeblock}
+
+Поля \code{KeyShareEntry} имеют следующее значение:
+\begin{itemize}
+\item
+\code{group}~--- имя циклической группы, которая используется в протоколе 
+Диффи~-- Хеллмана;
+\item
+\code{key_exchange}~--- одноразовый открытый ключ протокола.
+%
+Формат открытого ключа определяется в зависимости от используемой циклической 
+группой. Форматы открытых ключей для некоторых известных групп 
+определены в~\cite{RFC8446}, а также в~\ref{BSUITES.DH}.
+\end{itemize}
+
+Клиент отправляет расширение \code{key_share} в сообщении 
+\token[HS.CH]{ClientHello} вместе с расширением 
+\token[HS.Ext.sg]{supported_groups} (см.~\ref{HS.CH}).
+
+Данные расширения \code{key_share} в \token[HS.CH]{ClientHello} описываются 
+типом \code{KeyShareClientHello}, который определяется следующим образом:
+%
+\begin{codeblock}
+struct {
+  KeyShareEntry client_shares<0..2^16-1>;
+} KeyShareClientHello;
+\end{codeblock}
+
+В поле \code{client_shares} клиент указывает перечень элементов 
+типа \code{KeyShareEntry} в порядке убывания предпочтения.
+%
+Элементы должны соответствовать группам, перечисленным в 
+\token[HS.Ext.sg]{supported_groups}, и должны идти в той же очередности.
+%
+При этом некоторые группы, в том числе самые предпочтительные, могут быть не 
+представлены элементами \code{client_shares}.
+%
+Такая ситуация возникает, например, тогда, когда предпочтительная группа
+является новой, скорее всего не будет поддержана сервером и поэтому клиенту 
+нецелесообразно заранее вычислять открытый ключ для этой группы.
+
+\begin{note*}
+Тот факт, что клиент включил в \code{KeyShareClientHello} 
+открытый ключ для группы $A$ и не включил для группы $B$, не означает,
+что клиент предпочитает группу~$A$ группе~$B$. 
+%
+Поэтому выбор группы на основании \code{KeyShareClientHello} может дать в 
+качестве результата не самую предпочтительную группу из тех, которые клиент и 
+сервер одновременно поддерживают.
+%
+Если серверу требуется максимально точно учесть предпочтения клиента, то ему 
+следует сначала выбрать группу на основании \code{supported_groups}, а затем,
+в зависимости от того, поддержана ли группа открытым ключом в 
+\code{KeyShareClientHello}, либо предложить использовать группу через 
+\token[HS.HRR]{HelloRetryRequest}, либо выслать свой открытый ключ для  
+группы в \token[HS.SH]{ServerHello}.
+\end{note*}
+
+Клиент может включить в \code{KeyShareClientHello} открытый ключ для каждой  
+группы, указанной в \code{supported_groups}. Открытые ключи должны 
+генерироваться независимо друг от друга. 
+%
+Клиент не должен включать в \code{KeyShareClientHello} несколько открытых 
+ключей для одной и той же группы. 
+%
+Клиент не должен включать в \code{KeyShareClientHello} открытые ключи для 
+групп, не указанных в \code{supported_groups}.
+%
+Сервер может проверять эти требования и прерывать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter} при нарушении любого из них.
+
+Клиент может отправить пустой список \code{KeyShareClientHello.client_shares}, 
+запрашивая тем самым перезапуск Handshake с выбором группы со стороны сервера.
+%
+Сервер инициирует перезапуск самостоятельно, если ни одна из групп, указанных в
+списке, его не устраивает. Перезапуск реализуется отправкой сообщения
+\code{HelloRetryRequest} с включением в него расширения~\code{key_share}.
+
+Данные расширения \code{key_share} в \token[HS.HRR]{HelloRetryRequest} 
+описываются типом \code{KeyShareHelloRetryRequest}, который определяется 
+следующим образом: 
+%
+\begin{codeblock}
+struct {
+  NamedGroup selected_group;
+} KeyShareHelloRetryRequest;
+\end{codeblock}
+
+В поле \code{selected_group} сервер указывает имя подходящей группы, 
+выбирая среди групп, указанных клиентом в 
+расширении~\token[HS.Ext.sg]{supported_groups}.
+
+Получив расширение \code{key_share} в \token[HS.HRR]{HelloRetryRequest}, 
+клиент должен проверить два условия:
+\begin{enumerate}[label=\arabic*)]
+\item
+в \code{selected_group} указана одна из групп списка \code{supported_groups};
+\item
+в \code{selected_group} не указана группа, для которой в расширении 
+\code{key_share} предыдущего сообщения \token[HS.CH]{ClientHello}
+был выслан открытый ключ.
+\end{enumerate}
+
+При нарушении любого из условий клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter}. 
+%
+Если условия соблюдены, то клиент отправляет повторное сообщение 
+\token[HS.CH]{ClientHello}. В нем клиент должен изменить расширение
+\code{key_share}. В новую редакцию расширения должен быть включен только один 
+элемент типа \code{KeyShareEntry}, и он должен содержать открытый ключ для 
+группы, указанной в \code{KeyShareHelloRetryRequest.selected_group}.
+
+Если расширение \code{key_share} клиента устраивает сервер и он может 
+продолжить Handshake без перезапуска, то сервер отвечает сообщением 
+\token[HS.SH]{ServeHello}, также включая в него \code{key_share}.
+
+Данные расширения \code{key_share} в \token[HS.SH]{ServerHello} 
+описываются типом \code{KeyShareServerHello}, который определяется 
+следующим образом: 
+
+\begin{codeblock}
+struct {
+  KeyShareEntry server_share;
+} KeyShareServerHello;
+\end{codeblock}
+
+В поле \code{server_share} сервер указывает свой одноразовый открытый ключ.
+
+Открытый ключ сервера должен принадлежать одной из групп, для которых клиент 
+представил открытый ключ в своем расширении \code{key_share}.
+%
+\doubt{Сервер не должен отправлять открытый ключ для групп, не включенных 
+клиентом в расширение \code{supported_groups}.}
+%
+% todo: но ведь это следствие требования в предыдущем абзаце
+%
+Сервер не должен отправлять открытый ключ, если клиент включил в
+\token[HS.CH]{ClientHello} расширение
+\token[HS.Ext.pkem]{psk_key_exchange_modes}, и в этом расширении установлен
+режим \code{psk_ke} (cм. \ref{HS.Ext.pkem}).
+%
+Если выполнялся перезапуск Handshake и до \token[HS.SH]{ServerHello} сервер
+отправлял сообщение \token[HS.HRR]{HelloRetryRequest}, то клиент должен
+проверить, что открытый ключ сервера в \code{KeyShareServerHello} принадлежит
+группе, указанной в \code{KeyShareHelloRetryRequest}. При нарушении этого
+условия клиент должен прервать Handshake с оповещением
+\token[ALERT.Err.ip]{illegal_parameter}.
+
+\subsection{Расширение \code{psk_key_exchange_modes}}\label{HS.Ext.pkem} 
+
+В расширении \code{psk_key_exchange_modes} клиент сообщает, какие режимы 
+формирования общих ключей с участием PSK он поддерживает.
+%
+Расширение касается как внешнего PSK, согласованного за пределами TLS, 
+так и PSK для возобновления связи, полученного ранее от сервера в сообщении  
+\token[HS.NST]{NewSessionTicket}.
+
+Данные расширения \code{psk_key_exchange_modes} описываются типом 
+\code{PskKeyExchangeModes}, который определяется следующим образом: 
+
+\begin{codeblock}
+enum { psk_ke(0), psk_dhe_ke(1), (255) } PskKeyExchangeMode;
+
+struct {
+    PskKeyExchangeMode ke_modes<1..255>;
+} PskKeyExchangeModes;
+\end{codeblock}
+
+В поле \code{ke_modes} указываются допустимые режимы:
+\begin{itemize}
+\item
+\code{psk_ke}~--- режим PSK. В этом режиме сервер не должен отправлять 
+расширение \token[HS.Ext.ks]{key_share}; 
+\item
+\code{psk_dhe_ke}~--- режим PSK+DHE. В этом режиме клиент и сервер должны 
+обмениваться расширениями \token[HS.Ext.ks]{key_share}.
+\end{itemize}
+
+За пределами настоящего стандарта могут определяться дополнительные режимы.
+Это должно быть сделано так, чтобы по сообщениям Handshake можно было 
+однозначно определить, какой режим выбран. 
+
+\begin{note*}
+Выбор \code{psk_dhe_ke} подтверждается включением расширения 
+\token[HS.Ext.ks]{key_share} в \token[HS.SH]{ServerHello}, выбор 
+\code{psk_ke}~--- невключением.
+\end{note*}
+
+Если клиент включает в \token[HS.CH]{ClientHello} расширение 
+\token[HS.Ext.psk]{pre_shared_key}, то он должен сопроводить его 
+расширением \code{psk_key_exchange_modes}.
+%
+Если сервер получает \token[HS.CH]{ClientHello} с 
+\token[HS.Ext.psk]{pre_shared_key}, но без \code{psk_key_exchange_modes}, 
+то он должен прервать Handshake. 
+%
+Сервер не должен использовать режим формирования общих ключей,
+отличный от заданных клиентом. 
+%
+Серверу не следует отправлять в \token[HS.NST]{NewSessionTicket}
+секрет PSK, предназначенный для использования в режимах, которые не 
+поддерживает клиент. Попытка возобновления связи с таким секретом
+приведет к ошибке.
+
+% info: https://mailarchive.ietf.org/arch/msg/tls/qNQibGvRsBv55KlpFuUkDWZUcIs/
+% * What this text is supposed to mean is that the server shouldn't send
+%   tickets if it doesn't like the client's psk_ke modes. So, say that the 
+%   client only supports psk_dhe_ke and the server only supports psk_ke, 
+%   then the server shouldn't advertise tickets, because future resumption will
+%   be useless. 
+
+Сервер не должен отправлять расширение \code{psk_key_exchange_modes}.
+
+\subsection{Расширение \code{early_data}}\label{HS.Ext.ed} 
+
+Расширение \code{early_data} используется для информирования о применении 
+механизма 0-RTT (см.~\ref{COMMON.ZeroRTT}) и для передачи его настроек.
+
+Данные расширения \code{extension_data} описываются типом 
+\code{EarlyDataIndication}, который определяется следующим образом: 
+
+\begin{codeblock}
+struct {} Empty;
+
+struct {
+  select (Handshake.msg_type) {
+    case new_session_ticket:
+      uint32 max_early_data_size;
+    case client_hello: Empty;
+    case encrypted_extensions: Empty;
+  };
+} EarlyDataIndication;
+\end{codeblock}
+
+Если имеется секрет PSK, который годится для использования 
+в механизме 0-RTT, то клиент может применить механизм.
+%
+Для этого клиент должен включить в \token[HS.CH]{ClientHello} расширения 
+\token[HS.Ext.psk]{pre_shared_key} и \code{early_data}. В первом расширении 
+клиент описывает секрет, во втором информирует об его использовании для 
+защиты ранних прикладных данных. 
+%
+В \token[HS.Ext.psk]{pre_shared_key} используемый секрет должен быть описан 
+первым.
+
+Параметры 0-RTT определяются атрибутами используемого секрета. 
+%
+При согласовании секрета за пределами TLS атрибуты определяются в момент 
+согласования.
+%
+Если секрет был согласован в предыдущем соединении, то атрибуты определяются 
+параметрами и сообщениями этого соединения.
+
+При согласовании секрета в предыдущем соединении сервер высылает клиенту 
+сообщение \token[HS.NST]{NewSessionTicket}. Это сообщение должно  
+содержать расширение \code{early_data}. В поле 
+\code{EarlyDataIndication.max_early_data_size} расширения должен быть  
+указан лимит на объем ранних прикладных данных (см. \ref{HS.NST}).
+
+При использовании механизма 0-RTT сообщения Handshake и прикладные данные 
+первой (ранней) очереди имеют тот же формат и защищаются так же, как сообщения 
+и данные последующих очередей.
+%
+Единственное отличие состоит в том, что при защите ранних прикладных данных 
+используются специальные ключ и начальная синхропосылка, построенные
+по \code{client_early_traffic_secret} (см.~\ref{CRYPTO.Schedule}).
+%
+Если сервер согласился с использованием механизма 0-RTT, то после приема его 
+сообщения \token[HS.F]{Finished} клиент отправляет в ответ сообщение
+\token[HS.EOED]{EndOfEarlyData}, информируя тем самым о завершении ранней 
+защиты и смене ключей. Сообщение \token[HS.EOED]{EndOfEarlyData} защищается так 
+же, как ранние прикладные данные.
+
+Сервер, который получает сообщение \token[HS.CH]{ClientHello} с расширением 
+\code{early_data}, должен поступить одним из следующих способов.
+
+\begin{enumerate}
+\item
+Сервер игнорирует расширение \code{early_data} и действует по правилам 1-RTT,
+пропуская ранние прикладные данные клиента.
+%
+Для этого сервер обрабатывает присылаемые защищенные записи Record, которым в 
+сумме соответствует не более \code{max_early_data_size} байтов открытого текста, 
+и снимает с них защиту на ключе, построенном
+по~\code{client_handshake_traffic_secret} (см.~\ref{CRYPTO.Schedule}).
+%
+Сервер отбрасывает записи, при снятии защиты с которых происходят ошибки. Первая 
+запись, с которой успешно снята защита, считается началом второй очереди 
+сообщений клиента.
+%
+С этой записи сервер переходит на выполнение Handshake по схеме 1-RTT.
+
+\item
+Сервер предлагает клиенту исправить \token[HS.CH]{ClientHello}, отправляя
+сообщение \token[HS.HRR]{HelloRetryRequest}.
+%
+Клиент не должен включать \code{early_data} в повторное сообщение 
+\token[HS.CH]{ClientHello}, отказываясь тем самым от 0-RTT.
+%
+Сервер пропускает ранние прикладные данные клиента, отбрасывая записи Record с типом 
+\code{application_data}. Это маскировочный тип, который означает, что записи защищены 
+(см.~\ref{RECORD.Enc}). Сервер отбрасывает защищенные записи, которым в сумме 
+соответствует не более \code{max_early_data_size} байтов открытого текста.
+%
+Сервер находит запись с повторным сообщением \token[HS.CH]{ClientHello} и с 
+этого момента выполняет Handshake по схеме 2-RTT.
+
+\item
+Сервер сообщает о поддержке 0-RTT, отправляя клиенту сообщение 
+\token[HS.EE]{EncryptedExtensions} с расширением \code{early_data}.
+%
+Поддержка означает, что сервер будет принимать все ранние прикладные данные 
+клиента. При этом в момент отправки \token[HS.EE]{EncryptedExtensions} часть 
+этих данных может быть в процессе доставки.
+\end{enumerate}
+
+Прежде чем поддержать 0-RTT, сервер должен принять расширение 
+\token[HS.Ext.psk]{pre_shared_key} в сообщении \token[HS.CH]{ClientHello},
+обработать его по правилам, заданным в~\ref{HS.Ext.psk}, и определить первый 
+секрет, описанный в расширении.
+
+% use: https://www.rfc-editor.org/errata/eid6147
+
+После этого сервер должен проверить, что следующие параметры текущего соединения 
+соответствуют атрибутам секрета:
+\begin{itemize} 
+\item
+выбранная версия TLS;
+%
+% use:https://www.rfc-editor.org/errata/eid6146
+%
+\item
+выбранный криптонабор;
+\item
+прикладной протокол, выбранный с помощью расширения 
+\token[HS.Ext.alpn]{application_layer_protocol_negotiation} (см. 
+таблицу~\ref{Table.HS.Exts}), если таковой имеется.
+\end{itemize}
+%
+Если какая-либо из проверок завершена с ошибкой, то сервер должен пропустить ранние 
+прикладные данные клиента по правилам, заданным выше, переходя таким образом 
+к 1-RTT или 2-RTT.
+
+% use: https://www.rfc-editor.org/errata/eid6138
+
+Дополнительно сервер анализирует описание секрета в расширении
+\token[HS.Ext.psk]{pre_shared_key} клиента. Описание представляет собой
+структуру типа~\code{PskIdentity} (см.~\ref{HS.Ext.psk}). Если секрет был
+согласован через билет, отосланный сервером в сообщении
+\token[HS.NST]{NewSessionTicket} предыдущего соединения, то поле
+\code{PskIdentity.obfuscated_ticket_age} содержит аддитивно зашумленное время
+жизни билета.
+%
+Сервер проверяет время жизни, используя сохраненные реквизиты билета,
+в том числе величину зашумления, которая была отослана в поле 
+\code{ticket_age_add} сообщения~\token{NewSessionTicket} (см.~\ref{HS.NST}).
+%
+Сервер находит разность между \code{obfuscated_ticket_age} и 
+\code{ticket_age_add} по модулю~$2^{32}$ и проверяет, что 
+результат незначительно отличается от времени в миллисекундах с момента выпуска 
+билета. При нарушении этого условия серверу следует продолжить Handshake, но 
+без поддержки 0-RTT. Кроме этого, серверу не следует полагаться на то, что 
+сообщение \token[HS.CH]{ClientHello} не просрочено.
+
+Если сервер принял расширение \code{early_data}, то он должен обрабатывать 
+записи с ранними прикладными данными по обычным правилам. В частности, при 
+ошибке снятия защиты с записи сервер должен прервать Handshake с оповещением 
+\token[ALERT.Err.brm]{bad_record_mac}.
+
+При использовании механизма 0-RTT клиенту разрешается передавать ранние
+прикладные данные вплоть до сообщения \token[HS.F]{Finished} от сервера
+(см.~\ref{HS.EOED}). После получения \token[HS.F]{Finished} клиент отправляет
+сообщение \token[HS.EOED]{EndOfEarlyData} и стороны переходят к завершению Handshake.
+Чтобы избежать взаимной блокировки, сервер после приема \token[HS.CH]{ClientHello} должен
+сразу же отправлять свою очередь сообщений, включая \token[HS.SH]{ServerHello}
+с расширением \code{early_data}, не дожидаясь сообщения 
+\token[HS.EOED]{EndOfEarlyData} от клиента.
+
+Если сервер отклоняет \code{early_data}, то клиент может повторить отправку 
+ранних прикладных данных, только теперь на обычной стадии~--- по завершении 
+Handshake.
+%
+Прикладной протокол может по-разному интерпретировать соединение
+до завершения Handshake и после завершения. Поэтому клиенту не следует 
+автоматически, без участия прикладного протокола, повторно отправлять ранние 
+прикладные данные.
+%
+Клиент не должен автоматически повторно отправлять данные, если в процессе 
+выполнения Handshake изменяется прикладной протокол, согласуемый
+через расширение \token[HS.Ext.alpn]{application_layer_protocol_negotiation}.
+
+При определении расширений за пределами настоящего стандарта должны быть 
+оговорены правила их применения относительно механизма 0-RTT.
+
+\subsection{Расширение \code{pre_shared_key}}\label{HS.Ext.psk} 
+
+Расширение \code{pre_shared_key} используется для согласования 
+идентификатора секрета, который будет использоваться для формирования общих 
+ключей в режимах PSK и PSK+DHE (см.~\ref{COMMON.Components}).
+
+Данные расширения \code{pre_shared_key} описываются типом 
+\code{PreSharedKeyExtension}, который определяется следующим образом:
+
+\begin{codeblock}
+struct {
+  opaque identity<1..2^16-1>;
+  uint32 obfuscated_ticket_age;
+} PskIdentity;
+
+opaque PskBinderEntry<32..255>;
+
+struct {
+  PskIdentity identities<7..2^16-1>;
+  PskBinderEntry binders<33..2^16-1>;
+} OfferedPsks;
+
+struct {
+  select (Handshake.msg_type) {
+    case client_hello: OfferedPsks;
+    case server_hello: 
+      uint16 selected_identity;
+  };
+} PreSharedKeyExtension;
+\end{codeblock}
+
+Клиент отправляет расширение \code{pre_shared_key} в сообщении 
+\token[HS.CH]{ClientHello}. Клиент указывает в расширении структуру типа 
+\code{OfferedPsks}, поля которой имеют следующие значения:
+
+\begin{itemize}
+\item
+\code{identities}~--- список структур типа \code{PskIdentity}, которые 
+описывают секреты. При включении в \token[HS.CH]{ClientHello} расширения 
+\token[HS.Ext.ed]{early_data} первым в списке должно идти описание секрета для 
+механизма 0-RTT (см. \ref{HS.Ext.ed});
+
+\item
+\code{binders}~--- список PSK-скрепок. Каждый элемент \code{identities} должен 
+сопровождаться скрепкой, порядок скрепок должен повторять порядок элементов.
+Правила вычисления скрепок определяются в~\ref{CRYPTO.Binder}.
+\end{itemize}
+
+Поля \code{PskIdentity} имеют следующее значение:
+
+\begin{itemize}
+\item
+\code{identity}~--- идентификатор секрета. В его качестве может выступать 
+билет, высылаемый в сообщении \token[HS.NST]{NewSessionTicket}, или имя, 
+согласуемое за пределами TLS;
+\item
+\code{obfuscated_ticket_age}~--- зашумленное время жизни секрета. 
+%
+Если секрет согласован в предыдущем соединении через билет сообщения
+\token[HS.NST]{NewSessionTicket}, то в поле должна быть указана сумма по 
+модулю~$2^{32}$ числа миллисекунд, прошедших с момента получения билета, 
+и величины зашумления \code{ticket_age_add}, указанного в сообщении 
+(см.~\ref{HS.NST}). 
+%
+Клиент не должен использовать секрет, если с момента получения билета прошло 
+больше \code{ticket_lifetime} секунд, где \code{ticket_lifetime}~--- величина, 
+указанная в \token[HS.NST]{NewSessionTicket}.
+%
+Если секрет согласован за пределами TLS, то в поле \code{obfuscated_ticket_age}
+клиенту следует задавать значение~$0$, а сервер должен игнорировать поле.
+\end{itemize}
+
+\begin{note*}
+Зашумление времени жизни билета не позволяет пассивному противнику определить, 
+в каком из предыдущих соединений билет был выпущен.
+%
+Срок действия билета ограничен неделей и поэтому укладывается в 32-битовое 
+поле \code{ticket_lifetime}.
+\end{note*}
+
+Сервер отправляет расширение \code{pre_shared_key} в сообщении 
+\token[HS.SH]{ServerHello}. Сервер указывает в расширении номер выбранного 
+секрета \code{selected_identity}. Это порядковый номер в списке 
+\code{OfferedPsks.identities}, предложенным клиентом. Нумерация в списке  
+начинается с~$0$.
+
+Каждый секрет ассоциирован с определенным алгоритмом хэширования. 
+%
+Если секрет согласован в предыдущем соединении, то этим алгоритмом является
+алгоритм хэширования криптонабора, который использовался в соединении.
+%
+Если секрет согласовывается за пределами TLS, то алгоритм хэширования должен 
+определяться в момент согласования.
+%
+При выборе секрета сервер должен обеспечить его совместимость с криптонабором 
+текущего соединения: алгоритм хэширования криптонабора должен совпадать с алгоритмом
+хэширования, который ассоциирован с секретом.
+
+% skip: the Hash algorithm MUST be set when the PSK is established or default 
+% to SHA-256 if no such algorithm is defined
+
+% skip: In TLS versions prior to TLS 1.3, the Server Name Indication (SNI) 
+% value was intended to be associated with the session (Section 3 of [RFC 
+% 6066]), with the server being required to enforce that the SNI value 
+% associated with the session matches the one specified in the resumption 
+% handshake. However, in reality the implementations were not consistent on 
+% which of two supplied SNI values they would use, leading to the consistency 
+% requirement being de facto enforced by the clients. In TLS 1.3, the SNI value 
+% is always explicitly specified in the resumption handshake, and there is no 
+% need for the server to associate an SNI value with the ticket. Clients, 
+% however, SHOULD store the SNI with the PSK to fulfill the requirements of 
+% Section 4.6.1.
+
+% use: https://www.rfc-editor.org/errata/eid5627
+
+% skip: Implementor's note: When session resumption is the primary use case of 
+% PSKs, the most straightforward way to implement the PSK/cipher suite matching 
+% requirements is to negotiate the cipher suite first and then exclude any 
+% incompatible PSKs. Any unknown PSKs (e.g., ones not in the PSK database or 
+% encrypted with an unknown key) SHOULD simply be ignored. If no acceptable PSKs 
+% are found, the server SHOULD perform a non-PSK handshake if possible. If 
+% backward compatibility is important, client-provided, externally established 
+% PSKs SHOULD influence cipher suite selection.
+
+Перед выбором секрета сервер должен проверить соответствующую PSK-скрепку.
+Правила проверки определены в~\ref{CRYPTO.Binder}. Если скрепка отсутствует или 
+оказывается некорректной, то сервер должен прервать Handshake. Серверу не следует 
+проверять сразу несколько скрепок~--- следует выбрать единственный секрет и 
+проверить только его скрепку.
+
+% skip: See Section 8.2 and Appendix E.6 for the security rationale for this 
+% requirement. In order to accept PSK key establishment, the server sends a 
+% "pre_shared_key" extension indicating the selected identity.
+
+Получив сообщение \token[HS.SH]{ServerHello}, клиент находит расширение 
+\code{pre_shared_key} и проверяет, что указанный в нем номер 
+\code{selected_identity} не выходит за границы списка 
+\code{OfferedPsks.identities}, предложенного клиентом.
+%
+Кроме этого, клиент проверяет, что выбранные сервером криптонабор и секрет 
+совместимы друг с другом.
+%
+Наконец, клиент проверяет, что \token[HS.SH]{ServerHello} содержит 
+расширение \token[HS.Ext.ks]{key_share}, если этого требовало расширение 
+\token[HS.Ext.pkem]{psk_key_exchange_modes}, отправленное клиентом 
+в~\token[HS.CH]{ClientHello}.
+%
+При нарушении любого из условий клиент должен прервать Handshake с оповещением
+\token[ALERT.Err.ip]{illegal_parameter}.
+
+Если сервер включил в \token[HS.SH]{ServerHello} расширение
+\token[HS.Ext.ed]{early_data}, то клиент должен убедиться, что выбранный 
+сервером номер \code{selected_identity} равняется 0. При нарушении этого 
+условия клиент должен прервать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter}.
+
+Чтобы упростить построение PSK-скрепок, расширение \code{pre_shared_key} должно 
+идти последним в списке расширений \token[HS.CH]{ClientHello}. Сервер должен 
+проверять данное условие и прерывать Handshake с оповещением 
+\token[ALERT.Err.ip]{illegal_parameter} в случае его нарушения.
+
