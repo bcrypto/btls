@@ -1,9 +1,9 @@
-name: deploy
+name: deploy1
 
 on:
   push:
     tags: 
-      - v*
+      - v1*
 
 jobs:
   build:

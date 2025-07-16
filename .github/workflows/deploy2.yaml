@@ -1,0 +1,49 @@
+name: deploy2
+
+on:
+  push:
+    tags: 
+      - v2*
+
+jobs:
+  build:
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@master
+      - name: Build LaTeX
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: btls.tex
+          working_directory: spec13/
+      - name: Upload pdf
+        uses: actions/upload-artifact@v4
+        with:
+          name: btls13
+          path: spec13/btls.pdf
+  deploy:
+    runs-on: [ubuntu-latest]
+    needs: [build]
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: btls13
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload pdf asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./btls.pdf
+          asset_name: btls13.pdf
+          asset_content_type: application/pdf

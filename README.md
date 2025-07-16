@@ -9,12 +9,25 @@
 Btls is the informal name of STB 34.101.65, the official standard of Belarus.
 Btls compiles several RFC that defines the 
 [Transport Layer Security (TLS)](https://en.wikipedia.org/wiki/Transport_Layer_Security) 
-protocol and its extensions legalizing 
+protocol and its extensions thus officially adopting
 [TLS 1.2](https://www.rfc-editor.org/rfc/rfc5246.txt) in Belarus.
 
-Btls also defines 8 ciphersuites based on algorithms of 
+STB 34.101.65 introduces eight TLS 1.2 ciphersuites based on algorithms of 
 [STB 34.101.31](https://github.com/bcrypto/belt) 
 and [STB 34.101.45](https://github.com/bcrypto/bign).
+
+Btls also covers STB 34.101.btls13, the forthcoming standard that defines 
+[TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446.txt) incorporating its current 
+[errata](https://www.rfc-editor.org/errata_search.php?rfc=8446&rec_status=15&presentation=table) 
+and taking into account the 
+[BIS (II) edition](https://datatracker.ietf.org/doc/draft-ietf-tls-rfc8446bis/) 
+of the TLS 1.3 specification.
+
+STB 34.101.btls13 introduces two TLS 1.3 ciphersuites based on algorithms of 
+[STB 34.101.31](https://github.com/bcrypto/belt) and 
+[STB 34.101.77](https://github.com/bcrypto/bash) and specifies the use of the 
+[STB 34.101.45](https://github.com/bcrypto/bign) algorithms and elliptic curves 
+in TLS 1.3. 
 
 ## What is this repo?
 
@@ -23,6 +36,8 @@ discuss future versions, provide additional supporting material.
 
 The latest releases of Btls can be found at 
 [Releases](https://github.com/bcrypto/btls/releases).
+Versions of STB 34.101.65 and STB 34.101.btls13 are of the form `v1.XX` and 
+`v2.XX`, respectively.
 
 Comments and proposals are processed at 
 [Issues](https://github.com/bcrypto/btls/issues). 
