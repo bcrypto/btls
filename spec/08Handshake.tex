@@ -915,11 +915,13 @@ PSK и T\_PSK и не высылается при использовании
 struct {
   ClientCertificateType certificate_types<1..2^8-1>;
   SignatureAndHashAlgorithm
-    supported_signature_algorithms<2^16-1>;
+    supported_signature_algorithms<2..2^16-2>;
   DistinguishedName certificate_authorities<0..2^16-1>;
 } CertificateRequest;
 opaque DistinguishedName<1..2^16-1>;
 \end{lstlisting}
+
+% use: https://www.rfc-editor.org/errata/eid2864
 
 Поля структуры \lstinline{CertificateRequest} имеют следующее значение:
 \begin{itemize}

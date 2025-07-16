@@ -1,13 +1,22 @@
 \clearpage
-\chapter*{\mbox{}\hfill Поправка к официальной редакции\hfill\mbox{}}
+\chapter*{\mbox{}\hfill Поправка к официальной редакции\footnote{
+Синим цветом выделены корректировки, пока не принятые официально.
+}\hfill\mbox{}}
 
-\mbox{}
-
+{\small
 \begin{center}
-\begin{tabular}{|p{3.5cm}|p{6cm}|p{6cm}|}
+\begin{longtable}{|p{2.9cm}|p{6.4cm}|p{6.3cm}|}
 \hline
 В каком месте & Напечатано & Должно быть\\
 \hline
+\hline
+\addendum{Раздел~\ref{HANDSHAKE},}\par
+\addendum{подраздел~\ref{HANDSHAKE.10},}\par
+\addendum{абзац 2}
+&
+\lstinline{supported_signature_algorithms<2^16-1>;} &
+\lstinline{supported_signature_algorithms<2..2^16-2>;}
+\\
 \hline
 Приложение~\ref{BSUITES},\par
 таблица~\ref{Table.BSUITES.1},\par
@@ -32,9 +41,9 @@
 \{255, 28\}
 \\
 \hline
-Приложение~\ref{BSUITES},\par
-пункт~\ref{BSUITES.1},\par
-последний абзац
+\addendum{Приложение~\ref{BSUITES},}\par
+\addendum{пункт~\ref{BSUITES.1},}\par
+\addendum{последний абзац}
 &
 Во всех криптонаборах используется один и тот же алгоритм генерации
 псевдослучайных чисел (см.~В.2.4). Отличаются алгоритмы шифрования (см.~В.2.1),
@@ -48,9 +57,9 @@
 (см.~\ref{BSUITES.2.3}).
 \\
 \hline
-Приложение~\ref{BSUITES},\par
-пункт~\ref{BSUITES.2.1.2},\par
-последний абзац
+\addendum{Приложение~\ref{BSUITES},}\par
+\addendum{пункт~\ref{BSUITES.2.1.2},}\par
+\addendum{последний абзац}
 &
 \lstinline{SecurityParameters.mac_lenght}
 &
@@ -58,9 +67,9 @@
 \\
 \hline
 \multirow{3}{*}{\shortstack[l]{
-Приложение~\ref{BSUITES},\\
-пункт~\ref{BSUITES.2},\\[3pt]
-заголовки}}
+\addendum{Приложение~\ref{BSUITES}},\\
+\addendum{пункт~\ref{BSUITES.2}},\\[3pt]
+\addendum{заголовки}}}
 &
 В.2.3~Одновременное шифрование и имитозащита
 &
@@ -130,6 +139,11 @@
 \lstinline|SignatureAlgorithm +=|\par
 \lstinline| {bign_sign(231)};|
 \\
+%
 \hline
-\end{tabular}
+\end{longtable}
 \end{center}
+}
+
+\thispagestyle{headings}
+
