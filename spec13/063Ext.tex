@@ -181,23 +181,20 @@ CH, EE\\
 \code|padding| & \cite{RFC7685} & 
 CH\\ 
 %
-\code|key_share| & \ref{HS.Ext.ks} &
-CH, SH, HRR\\ 
-%
 \code|pre_shared_key| & \ref{HS.Ext.psk} &
 CH, SH\\ 
-%
-\code|psk_key_exchange_modes| & \ref{HS.Ext.pkem} &
-CH\\ 
 %
 \code|early_data| & \ref{HS.Ext.ed} &
 CH, EE, NST\\ 
 %
+\code|supported_versions| & \ref{HS.Ext.sv} &
+CH, SH, HRR\\ 
+%
 \code|cookie| & \ref{HS.Ext.c} &
 CH, HRR\\ 
 %
-\code|supported_versions| & \ref{HS.Ext.sv} &
-CH, SH, HRR\\ 
+\code|psk_key_exchange_modes| & \ref{HS.Ext.pkem} &
+CH\\ 
 %
 \code|certificate_authorities| & \ref{HS.Ext.ca} &
 CH, CR\\
@@ -210,6 +207,9 @@ CH\\
 %
 \code|signature_algorithms_cert| & \ref{HS.Ext.sa} &
 CH, CR\\ 
+%
+\code|key_share| & \ref{HS.Ext.ks} &
+CH, SH, HRR\\ 
 \hline
 \end{tabular}
 \end{table}
