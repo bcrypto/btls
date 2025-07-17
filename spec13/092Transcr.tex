@@ -51,12 +51,12 @@ $M_1\gets\itob{\code{message_type}}_8\parallel 0^{16}\parallel
 \begin{note*}
 На шаге 1.1 алгоритма $M_1=\code{ClientHello}$, $M_2=\code{HelloRetryRequest}$.
 %
-Сообщение $\code{ClientHello}$ заменяется искусственным сообщением типа 
+Сообщение \token[HS.CH]{ClientHello} заменяется искусственным сообщением типа 
 \code{message_type}, которое содержит $\code{Hash}(\code{ClientHello})$.
 %
-Замена позволяет серверу без состояния перезапускать Handshake, не сохраняя 
-\code{ClientHello}, а пересылая его хэш-значение в расширении 
-\token[HS.Ext.c]{cookie} сообщения~\token[HS.HRR]{HelloRetryRequest} 
+Замена позволяет серверу без состояния перезапускать Handshake, не сохраняя
+\token[HS.CH]{ClientHello}, а пересылая его хэш-значение в расширении
+\token[HS.Ext.c]{cookie} сообщения~\token[HS.HRR]{HelloRetryRequest}
 (см.~\ref{HS.Ext.c}).
 \end{note*}
 

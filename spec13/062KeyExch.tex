@@ -251,8 +251,8 @@ PSK-скрепки. Могут исключаться идентификатор
 \token[ALERT.Err.um]{unexpected_message}.
 
 Если сервер установил соединение TLS версии 1.2 и в рамках \doubt{переустановки} 
-связи получает \token[HS.CH]{ClientHello} версии 1.3, то сервер должен 
-сохранить версию 1.2 соединения и \doubt{не переходить на версию 1.3}.
+связи получает \token{ClientHello} версии 1.3, то сервер должен сохранить 
+версию 1.2 соединения и \doubt{не переходить на версию 1.3}.
 
 % todo: разобраться с "and receives a TLS 1.3 ServerHello" и renegotiation.
 
@@ -396,9 +396,9 @@ Handshake с оповещением \token[ALERT.Err.pv]{protocol_version}.
 
 \subsection{Сообщение \code{HelloRetryRequest}}\label{HS.HRR} 
 
-Сервер отправляет сообщение \token[HS.HRR]{HelloRetryRequest},
-если присланное \token[HS.CH]{ClientHello} позволяет согласовать параметры 
-и сформировать общие ключи, но не содержит всех необходимых для этого сведений.
+Сервер отправляет сообщение \code{HelloRetryRequest}, если присланное 
+\token[HS.CH]{ClientHello} позволяет согласовать параметры и сформировать общие 
+ключи, но не содержит всех необходимых для этого сведений.
 
 Сообщение \code{HelloRetryRequest} имеет такой же формат, 
 как~\token[HS.SH]{ServerHello}, повторяется семантика полей 
@@ -413,9 +413,9 @@ Handshake с оповещением \token[ALERT.Err.pv]{protocol_version}.
 включить в \code{HelloRetryRequest} минимальный набор расширений, который 
 позволит скорректировать \token[HS.CH]{ClientHello}.
 %
-Как и для \token[HS.SH]{ServerHello}, сообщение \token[HS.HRR]{HelloRetryRequest}
-не должно содержать расширений, которые не были включены в 
-\token[HS.CH]{ClientHello}. Единственным исключением является необязательное 
+Как и для \token[HS.SH]{ServerHello}, сообщение \code{HelloRetryRequest} не
+должно содержать расширений, которые не были включены в
+\token[HS.CH]{ClientHello}. Единственным исключением является необязательное
 расширение \token{cookie} (см.~\ref{HS.Ext.c}).
 
 Кроме \token[HS.Ext.sg]{supported_versions} и \token[HS.Ext.c]{cookie} в 
@@ -430,13 +430,13 @@ Handshake с оповещением \token[ALERT.Err.pv]{protocol_version}.
 После этого клиент должен обработать расширения, начиная с 
 \token[HS.Ext.sv]{supported_versions}. 
 %
-Клиент должен прервать Handshake с оповещением 
-\token[ALERT.Err.ip]{illegal_parameter}, если учет расширений  
-\token[HS.HRR]{HelloRetryRequest} не изменит \token[HS.CH]{ClientHello}. 
+Клиент должен прервать Handshake с оповещением
+\token[ALERT.Err.ip]{illegal_parameter}, если учет расширений
+\code{HelloRetryRequest} не изменит \token[HS.CH]{ClientHello}.
 
-Если клиент получает второе сообщение \token[HS.HRR]{HelloRetryRequest} в том 
-же соединении, т.~e. после своего повторного \token[HS.CH]{ClientHello}, то 
-он должен прервать рукопожатие с оповещением 
+Если клиент получает второе сообщение \code{HelloRetryRequest} в том же
+соединении, т.~e. после своего повторного \token[HS.CH]{ClientHello}, то он
+должен прервать рукопожатие с оповещением
 \token[ALERT.Err.um]{unexpected_message}.
 
 % use: https://www.rfc-editor.org/errata/eid6136
