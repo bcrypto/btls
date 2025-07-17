@@ -196,7 +196,7 @@ NamedGroup += {
 \code{bash384} (СТБ 34.101.77);
 \item
 \code{bign-with-bash512}~--- алгоритмы ЭЦП в связке c алгоритмом хэширования 
-\code{bash384} (СТБ 34.101.77).
+\code{bash512} (СТБ 34.101.77).
 \end{itemize}
 
 В алгоритмах \code{bign-with-hbelt} должны использоваться параметры
@@ -210,7 +210,7 @@ NamedGroup += {
 SignatureScheme += {
   bign_with_hbelt(0xFE01),
   bign_with_bash384(0xFE02),
-  bign_with_bash384(0xFE03)
+  bign_with_bash512(0xFE03)
 };
 \end{codeblock}
 
