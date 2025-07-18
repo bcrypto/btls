@@ -1,12 +1,12 @@
 \section{Аутентификация}\label{HS.Auth} 
 
-\subsection{Сообщение \code{Certificate}}\label{HS.CT} 
+\subsection{Сообщение \token{Certificate}}\label{HS.CT} 
 
-В сообщении \code{Certificate} сторона передает свой сертификат для
+В сообщении \token{Certificate} сторона передает свой сертификат для
 аутентификации, а также другие сертификаты и данные, которые подтверждают его
 подлинность.
 
-Формат сообщения \code{Certificate} описывается одноименным типом:
+Формат сообщения \token{Certificate} описывается одноименным типом:
 %
 \begin{codeblock}
 enum {
@@ -53,7 +53,7 @@ struct {
 содержать сертификаты X.509 (СТБ 34.101.19). Сертификат кодируется по правилам 
 DER, код размещается в поле \code{CertificateEntry.cert_data}. 
 %
-Сертификат отправителя сообщения \code{Certificate} должен быть 
+Сертификат отправителя сообщения \token{Certificate} должен быть 
 первым в цепочке \code{certificate_list}. Следующие сертификаты следует 
 располагать так, чтобы каждый из них удостоверял предыдущий.
 %
@@ -82,7 +82,7 @@ DER-код контейнера \code{SubjectPublicKeyInfo} (см.~\ref{HS.Ext.L
 удостоверяющую подпись, обычную для сертификатов. Тем не менее, 
 контейнер выполняет функции сертификата, если сторона TLS ведет список
 доверенных контейнеров, согласованный за пределами TLS, и проверяет,
-что присланный в \code{Certificate} контейнер входит в список.
+что присланный в \token{Certificate} контейнер входит в список.
 \end{note*}
 
 % skip: Note that if raw public keys [RFC 7250] or the cached information 
@@ -97,38 +97,38 @@ DER-код контейнера \code{SubjectPublicKeyInfo} (см.~\ref{HS.Ext.L
 %
 Они описывается типом \code{Extension}, который определен в~\ref{HS.Ext.List}.
 %
-Расширения в сообщении \code{Certificate} сервера должны соответствовать 
+Расширения в сообщении \token{Certificate} сервера должны соответствовать 
 расширениям в \token[HS.CH]{ClientHello},  
-а расширения в \code{Certificate} клиента~--- расширениям в 
+а расширения в \token{Certificate} клиента~--- расширениям в 
 \token[HS.CR]{CertificateRequest}.
 %
 Если расширение относится ко всей цепочке сертификатов, то оно должно быть 
 указано в первом элементе списка \code{certificate_list}.
 %
 Настоящий стандарт разрешает использовать только расширение 
-\token{status_request} (см.~\ref{HS.Ext.sr}). Перечень допустимых расширений 
-может дополняться за пределами стандарта.
+\token[HS.Ext.sr]{status_request} (см.~\ref{HS.Ext.sr}). Перечень допустимых 
+расширений может дополняться за пределами стандарта.
 
 % skip: and the SignedCertificateTimestamp extension [RFC6962]
 
-Сервер должен отправить сообщение \code{Certificate}, если 
+Сервер должен отправить сообщение \token{Certificate}, если 
 общие ключи были сформированы в режиме DHE, т.~е. без использования 
 предварительно согласованных секретов.
 %
 Список сертификатов сервера должен быть непустым.
 
-Клиент должен отправить сообщение \code{Certificate}, только и только если
+Клиент должен отправить сообщение \token{Certificate}, только и только если
 сервер запрашивает аутентификацию с помощью сообщения 
 \token[HS.CR]{CertificateRequest}.
 %
 Если сервер запрашивает аутентификацию, а у клиента отсутствует подходящий 
-сертификат, то клиент должен отправить сообщение \code{Certificate} 
+сертификат, то клиент должен отправить сообщение \token{Certificate} 
 с пустым списком \code{certificate_list}, т.~е. без сертификатов.
 
 % skip: A Finished message MUST be sent regardless of whether the Certificate 
 % message is empty.
 
-Сообщение \code{Certificate} защищается на ключе, построенном по 
+Сообщение \token{Certificate} защищается на ключе, построенном по 
 \code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, 
 в зависимости от отправителя (см. \ref{CRYPTO.Schedule}).
 
@@ -141,8 +141,8 @@ DER-код контейнера \code{SubjectPublicKeyInfo} (см.~\ref{HS.Ext.L
 (см. таблицу~\ref{Table.HS.Exts}).
 
 Открытый ключ сертификата должен быть совместим с одним из алгоритмов ЭЦП, 
-указанных противоположной стороной в расширении \token{signature_algorithms}
-(см.~\ref{HS.Ext.sa}).
+указанных противоположной стороной в расширении 
+\token[HS.Ext.sa]{signature_algorithms} (см.~\ref{HS.Ext.sa}).
 
 \begin{note*}
 Возможна ситуация, когда открытый ключ сертификата используется с одним 
@@ -218,15 +218,15 @@ DER-код контейнера \code{SubjectPublicKeyInfo} (см.~\ref{HS.Ext.L
 усмотрению либо продолжить Handshake без аутентификации клиента, либо прервать 
 его с оповещением \token[ALERT.Err.cr]{certificate_required}. 
 
-\subsection{Сообщение \code{CertificateVerify}}\label{HS.CV} 
+\subsection{Сообщение \token{CertificateVerify}}\label{HS.CV} 
 
-Сообщение \code{CertificateVerify} содержит подпись текущей стенограммы 
-Handshake. С помощью \code{CertificateVerify} отправитель доказывает, что он
+Сообщение \token{CertificateVerify} содержит подпись текущей стенограммы 
+Handshake. С помощью \token{CertificateVerify} отправитель доказывает, что он
 действительно владеет личным ключом, связанным с его сертификатом. Кроме этого, 
-подпись в \code{CertificateVerify} подтверждает целостность и подлинность 
+подпись в \token{CertificateVerify} подтверждает целостность и подлинность 
 стенограммы. 
 
-Формат сообщения \code{CertificateVerify} описывается одноименным типом:
+Формат сообщения \token{CertificateVerify} описывается одноименным типом:
 
 \begin{codeblock}
 struct {
@@ -248,49 +248,49 @@ struct {
 Подпись вырабатывается по правилам, заданным в~\ref{CRYPTO.Auth}.
 При выработке подписи используется личный ключ отправителя сообщения.
 
-Сервер должен отправлять \code{CertificateVerify} при аутентификации по 
+Сервер должен отправлять \token{CertificateVerify} при аутентификации по 
 сертификату, после сообщения \token[HS.CT]{Certificate}.
 %
-Клиент должен отправлять \code{CertificateVerify} при аутентификации по 
+Клиент должен отправлять \token{CertificateVerify} при аутентификации по 
 сертификату, если сертификат указан в \token[HS.CT]{Certificate} (список 
 сертификатов непуст).
 
-Сообщение \code{CertificateVerify} должно отправляться непосредственно после 
+Сообщение \token{CertificateVerify} должно отправляться непосредственно после 
 \token[HS.CT]{Certificate} и непосредственно перед \token[HS.F]{Finished}.
 
-Идентификатор алгоритмов ЭЦП в сообщении \code{CertificateVerify} сервера 
+Идентификатор алгоритмов ЭЦП в сообщении \token{CertificateVerify} сервера 
 должен входить в список, указанный клиентом в расширении 
 \token[HS.Ext.sa]{signature_algorithms} сообщения \token[HS.CH]{ClientHello}. 
 %
 % skip: unless no valid certificate chain can be produced without unsupported 
 % algorithms (see Section 4.2.3).
 %
-Идентификатор алгоритмов ЭЦП в \code{CertificateVerify} клиента 
+Идентификатор алгоритмов ЭЦП в \token{CertificateVerify} клиента 
 должен входить в список, указанный сервером в расширении 
 \token[HS.Ext.sa]{signature_algorithms} сообщения 
 \token[HS.CR]{CertificateRequest}.  
 %
-Открытый ключ в сертификате отправителя \code{CertificateVerify} должен 
+Открытый ключ в сертификате отправителя \token{CertificateVerify} должен 
 соответствовать алгоритмам ЭЦП. 
 
-Получатель \code{CertificateVerify} должен проверить подпись в поле
+Получатель \token{CertificateVerify} должен проверить подпись в поле
 \code{signature}. При проверке должен использоваться открытый ключ из
 сертификата отправителя, присланного в сообщении \token[HS.CT]{Certificate}.
 %
 Если проверка подписи завершена с ошибкой, то получатель должен прервать 
 Handshake с оповещением \token[ALERT.Err.de2]{decrypt_error}.
 
-Сообщение \code{CertificateVerify} защищается на ключе, построенном по 
+Сообщение \token{CertificateVerify} защищается на ключе, построенном по 
 \code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, 
 в зависимости от отправителя.
 
-\subsection{Сообщение \code{Finished}}\label{HS.F} 
+\subsection{Сообщение \token{Finished}}\label{HS.F} 
 
-В сообщении \code{Finished} пересылается имитовставка текущей стенограммы 
+В сообщении \token{Finished} пересылается имитовставка текущей стенограммы 
 Handshake. Имитовставка вычисляется на одном из общих ключей. Ее корректность 
 подтверждает знание общих ключей, целостность и подлинность стенограммы.
 
-Формат сообщения \code{Finished} определяется одноименным типом:
+Формат сообщения \token{Finished} определяется одноименным типом:
 
 \begin{codeblock}
 struct {
@@ -301,26 +301,26 @@ struct {
 В поле \code{verify_data} указывается имитовставка стенограммы. 
 Имитовставка вычисляется по правилам, заданным в~\ref{CRYPTO.Auth}.
 
-Получатель \code{Finished} должен проверить имитовставку.
+Получатель \token{Finished} должен проверить имитовставку.
 В случае ошибки получатель должен прервать Handshake с 
 оповещением \token[ALERT.Err.de2]{decrypt_error}. 
 
-После того, как сервер отправил свое сообщение \code{Finished}, получил и 
+После того, как сервер отправил свое сообщение \token{Finished}, получил и 
 проверил ответное \token{Finished}, он может начать отправку прикладных данных. 
 %
-Сервер может отправлять прикладные данные даже раньше, не дожидаясь \code{Finished} 
+Сервер может отправлять прикладные данные даже раньше, не дожидаясь \token{Finished} 
 клиента. Однако при этом в момент отправки у сервера нет гарантий, что клиент 
 действительно выполняет протокол, а не просто выслал 
 \token[HS.CH]{ClientHello}.
 %
-Клиент может отправлять прикладные данные, не дожидаясь \code{Finished} 
+Клиент может отправлять прикладные данные, не дожидаясь \token{Finished} 
 сервера, в рамках механизма 0-RTT.
 
-Сообщение \code{Finished} защищается на ключе, построенном по  
+Сообщение \token{Finished} защищается на ключе, построенном по  
 \code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, в 
 зависимости от отправителя.
 
-После \code{Finished} отправляемые данные должны защищаться на ключе,
+После \token{Finished} отправляемые данные должны защищаться на ключе,
 построенном по \code{client_application_traffic_key} или 
 \code{server_application_traffic_key}.
 %

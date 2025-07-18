@@ -1,9 +1,9 @@
-\section{Сообщение \code{EndOfEarlyData}}\label{HS.EOED}
+\section{Сообщение \token{EndOfEarlyData}}\label{HS.EOED}
 
-Сообщение \code{EndOfEarlyData} информирует о завершении передачи ранних 
+Сообщение \token{EndOfEarlyData} информирует о завершении передачи ранних 
 прикладных данных в рамках механизма 0-RTT.
    
-Формат сообщения \code{EndOfEarlyData} описывается одноименным типом:
+Формат сообщения \token{EndOfEarlyData} описывается одноименным типом:
 %
 \begin{codeblock}
 struct {} EndOfEarlyData;
@@ -11,19 +11,19 @@ struct {} EndOfEarlyData;
 
 Если сервер согласился с использованием механизма 0-RTT, отправив расширение 
 \token[HS.Ext.ed]{early_data} в сообщении \token[HS.EE]{EncryptedExtensions}, 
-то клиент должен отправить \code{EndOfEarlyData} после приема сообщения
+то клиент должен отправить \token{EndOfEarlyData} после приема сообщения
 \token[HS.F]{Finished} от сервера. 
 %
 Если сервер не включил \token[HS.Ext.ed]{early_data} в 
 \token[HS.EE]{EncryptedExtensions}, то клиент не должен высылать 
-\code{EndOfEarlyData}.
+\token{EndOfEarlyData}.
 
-Сообщение \code{EndOfEarlyData} защищается на ключе, построенном по 
+Сообщение \token{EndOfEarlyData} защищается на ключе, построенном по 
 \code{client_early_traffic_secret} (см.~\ref{CRYPTO.Schedule}). После отправки 
-\code{EndOfEarlyData} клиент защищает свои сообщения на ключе, построенном по 
+\token{EndOfEarlyData} клиент защищает свои сообщения на ключе, построенном по 
 \code{client_handshake_traffic_secret}.
 
-Сервер не должен отправлять сообщение \code{EndOfEarlyData}.
+Сервер не должен отправлять сообщение \token{EndOfEarlyData}.
 Если клиент получает данное сообщение, то он должен закрыть соединение
 с оповещением \token[ALERT.Err.um]{unexpected_message}. 
 

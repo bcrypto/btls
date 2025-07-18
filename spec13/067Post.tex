@@ -1,8 +1,8 @@
 \section{Сообщения после Handshake}\label{HS.Post} 
         
-\subsection{Сообщение \code{NewSessionTicket}}\label{HS.NST} 
+\subsection{Сообщение \token{NewSessionTicket}}\label{HS.NST} 
 
-В сообщении \code{NewSessionTicket} сервер высылает клиенту билет, который
+В сообщении \token{NewSessionTicket} сервер высылает клиенту билет, который
 ссылается на секрет, построенный по общему ключу 
 \code{resumption_master_secret} (см.~\ref{CRYPTO.Schedule}).
 %
@@ -19,23 +19,23 @@
 Располагая несколькими билетами, клиент может открывать несколько параллельных 
 соединений с сервером.
 
-Сервер может отправить сообщение \code{NewSessionTicket} в любой момент после 
+Сервер может отправить сообщение \token{NewSessionTicket} в любой момент после  
 получения сообщения \token[HS.F]{Finished} клиента при условии, что 
 \token[HS.CH]{ClientHello} содержит расширение 
-\token{psk_key_exchange_mode} (см.~\ref{HS.Ext.pkem}).
+\token[HS.Ext.pkem]{psk_key_exchange_mode} (см.~\ref{HS.Ext.pkem}).
 
 % use: https://www.rfc-editor.org/errata/eid7003
 
-Сообщение \code{NewSessionTicket} защищается на ключе, построенном по 
+Сообщение \token{NewSessionTicket} защищается на ключе, построенном по 
 \code{server_application_traffic_secret} (см.~\ref{CRYPTO.Schedule}). 
 
 Клиент может использовать PSK, на который ссылается билет в 
-\code{NewSessionTicket}, для возобновления связи. Для этого клиент должен 
+\token{NewSessionTicket}, для возобновления связи. Для этого клиент должен 
 включить билет в качестве идентификатора PSK в 
-расширение~\token{pre_shared_key} (см.~\ref{HS.Ext.psk}).
+расширение~\token[HS.Ext.psk]{pre_shared_key} (см.~\ref{HS.Ext.psk}).
 %
 Если клиент не поддерживает возобновление связи, то он должен игнорировать 
-сообщение \code{NewSessionTicket}.
+сообщение \token{NewSessionTicket}.
 
 % use: https://www.rfc-editor.org/errata/eid7250
 
@@ -63,7 +63,7 @@
 % skip: Note that if a server implementation declines all PSK identities with 
 % different SNI values, these two values are always the same.
 
-Формат сообщения \code{NewSessionTicket} определяется одноименным типом:
+Формат сообщения \token{NewSessionTicket} определяется одноименным типом:
 %
 \begin{codeblock}
 struct {
@@ -105,7 +105,7 @@ struct {
 зашумления времени жизни билета. Клиент получает зашумленное время жизни, 
 складывая актуальное время в миллисекундах с \code{ticket_age_add} по 
 модулю~$2^{32}$. Клиент высылает зашумленное время в расширении 
-\token{pre_shared_key} (см.~\ref{HS.Ext.psk}). При формировании  
+\token[HS.Ext.psk]{pre_shared_key} (см.~\ref{HS.Ext.psk}). При формировании  
 очередного билета сервер должен генерировать \code{ticket_age_add} заново;
 
 \item
@@ -124,10 +124,10 @@ struct {
 \end{itemize}
 
 Настоящий стандарт разрешает включать в перечень
-\code{NewSessionTicket.extensions} только расширение  \token{early_data}
-(см.~\ref{HS.Ext.ed}). Включая расширение, сервер объявляет, что секрет, на
-который ссылается выпущенный билет, может использоваться в механизме
-\mbox{0-RTT}.
+\code{NewSessionTicket.extensions} только расширение 
+\token[HS.Ext.ed]{early_data} (см.~\ref{HS.Ext.ed}). Включая расширение, сервер 
+объявляет, что секрет, на который ссылается выпущенный билет, может 
+использоваться в механизме \mbox{0-RTT}.
 
 В поле \code{max_early_data_size} расширения \token[HS.Ext.ed]{early_data} 
 сервер указывает, сколько байтов ранних прикладных данных разрешается передать 
@@ -148,7 +148,7 @@ struct {
 
 \begin{note}
 Если сервер не запрашивает аутентификацию клиента по сертификату, то он может 
-выслать билет в~\code{NewSessionTicket} сразу после своего сообщения 
+выслать билет в~\token{NewSessionTicket} сразу после своего сообщения 
 \token[HS.F]{Finished}.
 %
 Для этого сервер самостоятельно вычисляет сообщение 
@@ -175,7 +175,7 @@ struct {
 
 \subsection{Отложенная аутентификация}\label{HS.Post.Auth} 
 
-Если клиент отправил расширение \token{post_handshake_auth} 
+Если клиент отправил расширение \token[HS.Ext.pha]{post_handshake_auth} 
 (см.~\ref{HS.Ext.pha}), то он может быть аутентифицирован не только в протоколе 
 Handshake, но и по его завершении.
 
@@ -223,13 +223,13 @@ Handshake, но и по его завершении.
 % Если так, то как связать Finished и CerificateVerify, в которых нет 
 % certificate_request_context, с запросами?
 
-\subsection{Сообщение \code{KeyUpdate}}\label{HS.KU} 
+\subsection{Сообщение \token{KeyUpdate}}\label{HS.KU} 
 
-Сообщение \code{KeyUpdate} информирует об обновлении ключа защиты 
+Сообщение \token{KeyUpdate} информирует об обновлении ключа защиты 
 отправляемых прикладных данных. Правила обновления определены 
 в~\ref{CRYPTO.Upd}. 
 
-Формат сообщения \code{KeyUpdate} описывается одноименным типом:
+Формат сообщения \token{KeyUpdate} описывается одноименным типом:
 %
 \begin{codeblock}
 enum {
@@ -242,7 +242,7 @@ struct {
 \end{codeblock}
 
 В поле \code{request_update} отправитель сообщения информирует о 
-необходимости отправки встречного \code{KeyUpdate} или, другими словами,
+необходимости отправки встречного \token{KeyUpdate} или, другими словами,
 необходимости обновления ключа защиты принимаемых прикладных данных.
 %
 Значение \code{update_requested} означает необходимость отправки встречного 
@@ -252,21 +252,21 @@ struct {
 \token[ALERT.Err.um]{unexpected_message}, если в поле указано недопустимое 
 значение.
 
-Сообщение \code{KeyUpdate} может отправить любая сторона после
+Сообщение \token{KeyUpdate} может отправить любая сторона после
 того, как она выслала сообщение \token[HS.F]{Finished} и завершила,
 таким образом, Handshake. 
 %
-Если клиент или сервер получает \code{KeyUpdate} перед 
+Если клиент или сервер получает \token{KeyUpdate} перед 
 \token[HS.F]{Finished}, то он должен закрыть соединение с оповещением 
 \token[ALERT.Err.um]{unexpected_message}. 
 
-После передачи \code{KeyUpdate} отправитель должен использовать обновленный ключ 
+После передачи \token{KeyUpdate} отправитель должен использовать обновленный ключ 
 защиты отправляемых прикладных данных. 
 %
-При этом само сообщение \code{KeyUpdate} защищается на необновленном ключе.
+При этом само сообщение \token{KeyUpdate} защищается на необновленном ключе.
 %
 Стороны не должны принимать записи, защищенные на обновленном ключе, вплоть до 
-получения \code{KeyUpdate}, защищенного на необновленном.
+получения \token{KeyUpdate}, защищенного на необновленном.
 %
 % skip: Failure to do so may allow message truncation attacks.
 %
@@ -274,24 +274,24 @@ struct {
 \code{client_application_traffic_secret}, в зависимости от того, 
 кто является отправителем (см.~\ref{CRYPTO.TKeys}).
 
-Если в поле \code{request_update} сообщения \code{KeyUpdate} указано значение 
+Если в поле \code{request_update} сообщения \token{KeyUpdate} указано значение 
 \code{update_requested}, то получатель должен ответить своим собственным
-\code{KeyUpdate} прежде чем отправлять прикладные данные. 
+\token{KeyUpdate} прежде чем отправлять прикладные данные. 
 %
-В поле \code{request_update} встречного \code{KeyUpdate} должно быть указано 
+В поле \code{request_update} встречного \token{KeyUpdate} должно быть указано 
 значение \code{update_not_requested}.
 %
-Допустима ситуация, когда сторона получает несколько \code{KeyUpdate} с 
+Допустима ситуация, когда сторона получает несколько \token{KeyUpdate} с 
 запросом на встречное сообщение и отвечает только одним таким сообщением.
 %
-Сообщение \code{KeyUpdate} с запросом запрещено отправлять повторно до 
-получения искомого встречного \code{KeyUpdate}.
+Сообщение \token{KeyUpdate} с запросом запрещено отправлять повторно до 
+получения искомого встречного \token{KeyUpdate}.
 
 \begin{note}
-После отправки \code{KeyUpdate} с запросом на встречное сообщение, сторона 
+После отправки \token{KeyUpdate} с запросом на встречное сообщение, сторона 
 может получить это сообщение не сразу, а после других сообщений, которые 
 находятся в процессе доставки. При этом в процессе доставки могут находиться 
-запаздывающие сообщения \code{KeyUpdate}, не связанные с отправленным.
+запаздывающие сообщения \token{KeyUpdate}, не связанные с отправленным.
 \end{note}
 
 % skip: However, because send and receive keys are derived from independent 
@@ -300,7 +300,7 @@ struct {
 
 \begin{note}
 Если стороны независимо одновременно отправляют друг друг сообщения 
-\code{KeyUpdate} с запросами на встречные сообщения, то, ответив на запросы, 
+\token{KeyUpdate} с запросами на встречные сообщения, то, ответив на запросы, 
 каждая сторона в конце концов обновит ключ отправляемых ею данных дважды.
 \end{note}
 

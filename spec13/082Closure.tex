@@ -8,7 +8,7 @@
 
 \begin{itemize}
 \item\label{ALERT.Closure.cn}
-\code{close_notify}~--- отправитель информирует получателя о том, что больше не 
+\token{close_notify}~--- отправитель информирует получателя о том, что больше не 
 будет посылать сообщения в данном соединении. Предполагается, что оповещение
 будет доставлено прежде чем соединение будет закрыто на транспортном уровне; 
 
@@ -18,14 +18,14 @@
 % * It means that you deliver the close_notify before sending FIN (if on TCP).
 
 \item\label{ALERT.Closure.uc}
-\code{user_canceled}~--- отправитель информирует получателя о том, что он 
+\token{user_canceled}~--- отправитель информирует получателя о том, что он 
 отказывается от продолжения Handshake по причине, не связанной с ошибкой.
 %
-Оповещение \code{user_canceled} следует использовать только в Handshake. 
+Оповещение \token{user_canceled} следует использовать только в Handshake. 
 Для информирования об отказе по завершении Handshake следует 
-использовать~\code{close_notify}.
+использовать~\token{close_notify}.
 %
-После \code{user_canceled} следует отправлять \code{close_notify}.
+После \token{user_canceled} следует отправлять \token{close_notify}.
 \end{itemize}
 
 Указанные оповещения являются предупредительными. 
