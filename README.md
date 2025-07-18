@@ -16,7 +16,7 @@ Btls also covers STB 34.101.btls13, the forthcoming standard that defines
 [TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446.txt).
 STB 34.101.btls13 incorporates the current 
 [errata](https://www.rfc-editor.org/errata_search.php?rfc=8446&rec_status=15&presentation=table) 
-of the TLS 1.3 specification and and takes into account its
+of the TLS 1.3 specification and takes into account its
 [BIS (II) edition](https://datatracker.ietf.org/doc/draft-ietf-tls-rfc8446bis/).
 
 STB 34.101.65 introduces eight TLS 1.2 ciphersuites based on algorithms of 
@@ -24,14 +24,14 @@ STB 34.101.65 introduces eight TLS 1.2 ciphersuites based on algorithms of
 and [STB 34.101.45](https://github.com/bcrypto/bign).
 
 STB 34.101.btls13 introduces two TLS 1.3 ciphersuites based on algorithms of 
-STB 34.101.31 and [STB 34.101.77](https://github.com/bcrypto/bash) and 
-specifies how to use the algorithms and elliptic curves of STB 34.101.45 in TLS 
-1.3.
+STB 34.101.31 and [STB 34.101.77](https://github.com/bcrypto/bash).
+STB 34.101.btls13 also specifies how to use the algorithms and elliptic curves 
+of STB 34.101.45 in TLS 1.3.
 
 ## What is this repo?
 
-In this repo, we process comments on the current version of Btls,
-discuss future versions, provide additional supporting material.
+In this repo, we process comments on the current versions of the Btls 
+specifications, discuss future versions, provide additional supporting material.
 
 The latest releases of Btls can be found at 
 [Releases](https://github.com/bcrypto/btls/releases).
