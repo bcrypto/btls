@@ -300,8 +300,8 @@ struct {
 расширении~\token{supported_versions} которого отсутствует версия \code{0x0304}. 
 
 Если сервер выбрал версию 1.2, то он должен указать эту версию в поле 
-\code{ServerHello.version} и не должен включать в \token[HS.SH]{ServerHello} 
-расширение \token{supported_versions}.
+\code{ServerHello.legacy_version} и не должен включать в 
+\token[HS.SH]{ServerHello} расширение \token{supported_versions}.
 %
 Если сервер выбрал версию 1.3, то расширение должно быть включено и в нем 
 должна быть указана выбранная версию (\code{0x0304}). Кроме этого, сервер 
