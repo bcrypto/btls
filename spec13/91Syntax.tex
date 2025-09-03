@@ -125,7 +125,7 @@ uint16 longer<0..800>;
 \code{v1}, \code{v2}, \ldots, \code{vn} с именами 
 \code{e1}, \code{e2}, \ldots, \code{en}:
 \begin{codeblock}
-enum {e1(v1), e2(v2), ..., en(vn) [[, (m)]]} Te;
+enum { e1(v1), e2(v2), ..., en(vn) [[, (m)]] } Te;
 \end{codeblock}
 
 Перечень допустимых значений и соответствующих имен перечислительного типа 
@@ -149,7 +149,7 @@ Te += {ee(vv), eee(vvv)};
 перечисления занимают один байт:
 %
 \begin{codeblock}
-enum {red(3), blue(5), white(7)} Color;
+enum { red(3), blue(5), white(7) } Color;
 \end{codeblock}
 
 Максимальное допустимое значение может быть указано в определении типа без 
@@ -160,7 +160,7 @@ enum {red(3), blue(5), white(7)} Color;
 хотя могут принимать только значения~1, 2 или~4: 
 %
 \begin{codeblock}
-enum {sweet(1), sour(2), bitter(4), (32000)} Taste;
+enum { sweet(1), sour(2), bitter(4), (32000) } Taste;
 \end{codeblock}
 
 Областью видимости имен элементов перечисления является сам 
