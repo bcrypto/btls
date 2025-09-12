@@ -89,6 +89,8 @@ struct {
 Срок действия не должен быть больше 604800 секунд (7 суток). Нулевое значение
 \code{ticket_lifetime} означает, что билет следует уничтожить немедленно 
 \doubt{после использования}.
+%
+% use: https://mailarchive.ietf.org/arch/msg/tls/5hBdR59T3U9qSFJlCANqFObFPQs/
 % 
 Клиент не должен использовать билет по прошествии 7 суток после его выпуска,
 независимо от значения, установленного в \code{ticket_lifetime}.
@@ -196,7 +198,9 @@ Handshake, но и по его завершении.
 а после него сообщение~\token[HS.F]{Finished}. 
 %
 Сообщения должны идти в оговоренном порядке и не должны перемежаться 
-сообщениями других типов.
+сообщениями других типов \addendum{или от других запросов}.
+
+% use: https://mailarchive.ietf.org/arch/msg/tls/5hBdR59T3U9qSFJlCANqFObFPQs/
 
 Сообщение \token[HS.CR]{CertificateRequest} и ответные сообщения клиента
 защищаются на ключах, построенных по \code{server_application_traffic_secret}
@@ -219,10 +223,6 @@ Handshake, но и по его завершении.
 Синхропосылка \code{certificate_request_context} в 
 сообщениях~\token[HS.CR]{CertificateRequest} и \token[HS.CR]{Certificate}   
 помогает серверу связать запросы с ответами.
-
-% todo: Сообщения ответов (CT, CV, F) могут перемежаться друг с другом?
-% Если так, то как связать Finished и CerificateVerify, в которых нет 
-% certificate_request_context, с запросами?
 
 \subsection{Сообщение \token{KeyUpdate}}\label{HS.KU} 
 

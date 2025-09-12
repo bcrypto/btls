@@ -292,7 +292,9 @@ struct {
 \code{ClientHello.legacy_version} и при выборе версии использовать 
 исключительно расширение. Сервер должен выбирать из версий, перечисленных в 
 расширении, и при этом игнорировать версии, которые ему неизвестны,
-\doubt{а также версии ниже 1.2}.
+а также версии ниже 1.2.
+%
+% diff: в оригинале без "а также версии ниже 1.2".
 %
 Допускается, что будет выбрана версия 1.2.
 %
@@ -300,8 +302,11 @@ struct {
 расширении~\token{supported_versions} которого отсутствует версия \code{0x0304}. 
 
 Если сервер выбрал версию 1.2, то он должен указать эту версию в поле 
-\code{ServerHello.legacy_version} и не должен включать в 
-\token[HS.SH]{ServerHello} расширение \token{supported_versions}.
+\doubt{\code{ServerHello.legacy_version} (ранее \code{ServerHello.version})} и 
+не должен включать в \token[HS.SH]{ServerHello} расширение 
+\token{supported_versions}.
+%
+% use: https://mailarchive.ietf.org/arch/msg/tls/O0C2VvZwPfpFlFwGANJAfjS6EFk/
 %
 Если сервер выбрал версию 1.3, то расширение должно быть включено и в нем 
 должна быть указана выбранная версию (\code{0x0304}). Кроме этого, сервер 
@@ -318,8 +323,6 @@ Handshake с оповещением \token[ALERT.Err.ip]{illegal_parameter}.
 При перезапуске Handshake сервер должен проинформировать о выборе версии в
 сообщении \token[HS.HRR]{HelloRetryRequest} точно так же, как он это делает в
 \token[HS.SH]{ServerHello}.
-
-% todo: перечитать
 
 \subsection{Расширение \token{cookie}}\label{HS.Ext.c}
 
@@ -369,15 +372,15 @@ struct {
 \token[HS.CH]{ClientHello}. 
 
 \begin{note}
-\doubt{При определенных условиях сервер может реконструировать первое 
-\token[HS.CH]{ClientHello} по повторному, а затем проверить, что 
-хэш-значение реконструированного сообщения совпадает с присланным 
-в~\token{cookie}.}
+При определенных условиях сервер может реконструировать первое
+\token[HS.CH]{ClientHello} по повторному, а затем проверить, что хэш-значение
+реконструированного сообщения совпадает с присланным в~\token{cookie}.
 \end{note}
 
 % info: https://mailarchive.ietf.org/arch/msg/tls/7rLQEHrqKaYo7u31iNBNsPI_OVg/
 % info: https://mailarchive.ietf.org/arch/msg/tls/uOQBbe28_cIhQTmLgyPyPqtUvqk/
 % info: https://mailarchive.ietf.org/arch/msg/tls/dPKZI5RXdAAb6mH8PhuOWnw1-1o/
+% use: https://mailarchive.ietf.org/arch/msg/tls/5hBdR59T3U9qSFJlCANqFObFPQs/
 
 Если сервер работает без состояния, то он не может отличить первое сообщение 
 \token[HS.CH]{ClientHello} от повторного. Между этими сообщениями сервер может 
@@ -857,10 +860,9 @@ struct {
 Открытый ключ сервера должен принадлежать одной из групп, для которых клиент 
 представил открытый ключ в своем расширении \token{key_share}.
 %
-\doubt{Сервер не должен отправлять открытый ключ для групп, не включенных 
-клиентом в расширение \token[HS.Ext.sg]{supported_groups}.}
-%
-% todo: но ведь это следствие требования в предыдущем абзаце
+% skip: Сервер не должен отправлять открытый ключ для групп, не включенных 
+% клиентом в расширение \token[HS.Ext.sg]{supported_groups}.
+% info: https://mailarchive.ietf.org/arch/msg/tls/O0C2VvZwPfpFlFwGANJAfjS6EFk/
 %
 Сервер не должен отправлять открытый ключ, если клиент включил в
 \token[HS.CH]{ClientHello} расширение
