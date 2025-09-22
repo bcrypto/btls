@@ -16,7 +16,7 @@ struct {
 перечислены в таблице~\ref{Table.HS.Exts}.
 
 Сервер должен выслать \token{EncryptedExtensions} сразу после своего сообщения 
-\token[HS.SH]{Finished}.
+\token[HS.SH]{ServerHello}.
 
 Сообщение \token{EncryptedExtensions} защищается на ключе, построенном по 
 \code{server_handshake_traffic_secret} (см.~\ref{CRYPTO.Schedule}). Это первое 
