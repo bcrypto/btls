@@ -87,10 +87,9 @@ struct {
 %   первыми (сетевой порядок байтов, big-endian).
 %
 Срок действия не должен быть больше 604800 секунд (7 суток). Нулевое значение
-\code{ticket_lifetime} означает, что билет следует уничтожить немедленно 
-\doubt{после использования}.
+\code{ticket_lifetime} означает, что билет следует уничтожить немедленно.
 %
-% use: https://mailarchive.ietf.org/arch/msg/tls/5hBdR59T3U9qSFJlCANqFObFPQs/
+% use: https://github.com/tlswg/tls13-spec/pull/1396#issuecomment-3285930579
 % 
 Клиент не должен использовать билет по прошествии 7 суток после его выпуска,
 независимо от значения, установленного в \code{ticket_lifetime}.
@@ -198,7 +197,7 @@ Handshake, но и по его завершении.
 а после него сообщение~\token[HS.F]{Finished}. 
 %
 Сообщения должны идти в оговоренном порядке и не должны перемежаться 
-сообщениями других типов \addendum{или от других запросов}.
+сообщениями других типов или от других запросов.
 
 % use: https://mailarchive.ietf.org/arch/msg/tls/5hBdR59T3U9qSFJlCANqFObFPQs/
 

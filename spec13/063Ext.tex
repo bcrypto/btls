@@ -302,8 +302,8 @@ struct {
 расширении~\token{supported_versions} которого отсутствует версия \code{0x0304}. 
 
 Если сервер выбрал версию 1.2, то он должен указать эту версию в поле 
-\doubt{\code{ServerHello.legacy_version} (ранее \code{ServerHello.version})} и 
-не должен включать в \token[HS.SH]{ServerHello} расширение 
+\code{ServerHello.legacy_version} (\code{ServerHello.version} в TLS 1.2) 
+и не должен включать в \token[HS.SH]{ServerHello} расширение 
 \token{supported_versions}.
 %
 % use: https://mailarchive.ietf.org/arch/msg/tls/O0C2VvZwPfpFlFwGANJAfjS6EFk/
