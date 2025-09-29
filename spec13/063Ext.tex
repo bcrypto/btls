@@ -92,6 +92,10 @@ HRR~--- \token[HS.HRR]{HelloRetryRequest}.
 %
 Расширения перечисляются в порядке возрастания их типов
 в~\code{ExtensionType}.
+%
+Расширения, помеченные звездочкой, должны быть реализованы обязательно, если 
+противное не оговаривается за пределами настоящего стандарта относительно 
+конкретного случая применения TLS.
 
 Следующие расширения не вводятся в настоящем стандарте, но учитываются при 
 определении механизмов TLS.
@@ -143,7 +147,7 @@ X.509, определенные в СТБ 34.101.19, и контейнеры т�
 Расширение & Определение & Сообщения Handshake\\
 \hline
 \hline
-\code|server_name| & \cite{RFC6066} & 
+\code|server_name|$\phantom{}^*$ & \cite{RFC6066} & 
 CH, EE\\ 
 %
 \code|max_fragment_length| & \cite{RFC6066} & 
@@ -153,11 +157,11 @@ CH, EE\\
 CH, CR, CT\\ 
 % todo: \cite{RFC6066}?
 %
-\code|supported_groups| & \ref{HS.Ext.sg} & 
+\code|supported_groups|$\phantom{}^*$ & \ref{HS.Ext.sg} & 
 CH, EE\\ 
 % todo: \cite{RFC7919}?
 %
-\code|signature_algorithms| & \ref{HS.Ext.sa} &
+\code|signature_algorithms|$\phantom{}^*$ & \ref{HS.Ext.sa} &
 CH, CR\\ 
 %
 \code|use_srtp| & \cite{RFC5764} & 
@@ -187,10 +191,10 @@ CH, SH\\
 \code|early_data| & \ref{HS.Ext.ed} &
 CH, EE, NST\\ 
 %
-\code|supported_versions| & \ref{HS.Ext.sv} &
+\code|supported_versions|$\phantom{}^*$ & \ref{HS.Ext.sv} &
 CH, SH, HRR\\ 
 %
-\code|cookie| & \ref{HS.Ext.c} &
+\code|cookie|$\phantom{}^*$ & \ref{HS.Ext.c} &
 CH, HRR\\ 
 %
 \code|psk_key_exchange_modes| & \ref{HS.Ext.pkem} &
@@ -205,10 +209,10 @@ CR\\
 \code|post_handshake_auth| & \ref{HS.Ext.pha} &
 CH\\ 
 %
-\code|signature_algorithms_cert| & \ref{HS.Ext.sa} &
+\code|signature_algorithms_cert|$\phantom{}^*$ & \ref{HS.Ext.sa} &
 CH, CR\\ 
 %
-\code|key_share| & \ref{HS.Ext.ks} &
+\code|key_share|$\phantom{}^*$ & \ref{HS.Ext.ks} &
 CH, SH, HRR\\ 
 \hline
 \end{tabular}
