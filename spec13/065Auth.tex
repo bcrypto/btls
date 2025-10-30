@@ -50,7 +50,7 @@ struct {
 с помощью расширения \token[HS.Ext.ct]{server_certificate_type}
 или \token[HS.Ext.ct]{client_certificate_type}, или если согласован тип 
 \code{CertificateType.X509}, то элементы списка \code{certificate_list} должны 
-содержать сертификаты X.509 (СТБ 34.101.19). Сертификат кодируется по правилам 
+содержать сертификаты X.509 (см. СТБ 34.101.19). Сертификат кодируется по правилам 
 DER, код размещается в поле \code{CertificateEntry.cert_data}. 
 %
 Сертификат отправителя сообщения \token{Certificate} должен быть 
@@ -95,7 +95,7 @@ DER-код контейнера \code{SubjectPublicKeyInfo} (см.~\ref{HS.Ext.L
 Сопровождающие сертификат расширения задаются в поле 
 \code{CertificateEntry.extensions}.
 %
-Они описывается типом \code{Extension}, который определен в~\ref{HS.Ext.List}.
+Они описываются типом \code{Extension}, который определен в~\ref{HS.Ext.List}.
 %
 Расширения в сообщении \token{Certificate} сервера должны соответствовать 
 расширениям в \token[HS.CH]{ClientHello},  
@@ -129,12 +129,12 @@ DER-код контейнера \code{SubjectPublicKeyInfo} (см.~\ref{HS.Ext.L
 % message is empty.
 
 Сообщение \token{Certificate} защищается на ключе, построенном по 
-\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, 
+\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}
 в зависимости от отправителя (см. \ref{CRYPTO.Schedule}).
 
 \subsection{Выбор и проверка сертификатов}\label{HS.Auth.Cert} 
 
-Клиент и сервер должны использовать сертификаты X.509 (СТБ 34.101.19), если 
+Клиент и сервер должны использовать сертификаты X.509 (см. СТБ 34.101.19), если 
 иной тип не согласован с помощью расширений 
 \token[HS.Ext.ct]{client_certificate_type}  
 и \token[HS.Ext.ct]{server_certificate_type} 
@@ -183,7 +183,7 @@ DER-код контейнера \code{SubjectPublicKeyInfo} (см.~\ref{HS.Ext.L
 Требование не распространяется на точки доверия, подписи которых могут не 
 проверяться.
 
-Если отправителем \token[HS.CT]{Certificate} является сервер, и он не может 
+Если отправителем \token[HS.CT]{Certificate} является сервер и он не может 
 подготовить цепочку сертификатов, в которой используются только запрошенные 
 алгоритмы ЭЦП, то серверу следует продолжить Handshake, составив резервную 
 цепочку по своему усмотрению.
@@ -281,7 +281,7 @@ struct {
 Handshake с оповещением \token[ALERT.Err.de2]{decrypt_error}.
 
 Сообщение \token{CertificateVerify} защищается на ключе, построенном по 
-\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, 
+\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key} 
 в зависимости от отправителя.
 
 \subsection{Сообщение \token{Finished}}\label{HS.F} 
@@ -317,8 +317,8 @@ struct {
 сервера, в рамках механизма 0-RTT.
 
 Сообщение \token{Finished} защищается на ключе, построенном по  
-\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key}, в 
-зависимости от отправителя.
+\code{client_handshake_traffic_key} или \code{server_handshake_traffic_key} 
+в зависимости от отправителя.
 
 После \token{Finished} отправляемые данные должны защищаться на ключе,
 построенном по \code{client_application_traffic_key} или 

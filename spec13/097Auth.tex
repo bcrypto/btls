@@ -18,7 +18,7 @@
 \item
 строка \str{TLS 1.3, server CertificateVerify}, если подписантом 
 является сервер, или строка \str{TLS 1.3, client CertificateVerify}, если 
-клиент; 
+подписантом является клиент; 
 %
 % use: https://www.rfc-editor.org/errata/eid6141
 %
@@ -34,10 +34,10 @@ $\code{Transcript-Hash}(\code{ClientHello},\ldots,\code{Certificate})$,
 
 \begin{note*}
 Выбранный формат подписываемых данных защищает от угроз для сервера, который
-поддерживает соединения TLS 1.2, используя тот же сертификат и соответственно
-личный ключ. При выборе в TLS 1.2 режима DHE сервер подписывает и отправляет в
-сообщении \code{ServerKeyExhchange} данные, начальные 32 байта которых 
-контролирует клиент.
+поддерживает соединения TLS версии 1.2, используя тот же сертификат и 
+соответственно личный ключ. При выборе в TLS версии 1.2 режима DHE сервер 
+подписывает и отправляет в сообщении \code{ServerKeyExhchange} данные, 
+начальные 32 байта которых контролирует клиент.
 \end{note*}
 
 % info: https://mailarchive.ietf.org/arch/msg/tls/AYSDPvSRV8bvwis8HTGTzwLh1IM/
