@@ -48,7 +48,7 @@ struct {
 
 Если стороны не согласовывали тип сертификата 
 с помощью расширения \token[HS.Ext.ct]{server_certificate_type}
-или \token[HS.Ext.ct]{client_certificate_type}, или если согласован тип 
+или \token[HS.Ext.ct]{client_certificate_type} или если согласован тип 
 \code{CertificateType.X509}, то элементы списка \code{certificate_list} должны 
 содержать сертификаты X.509 (см. СТБ 34.101.19). Сертификат кодируется по правилам 
 DER, код размещается в поле \code{CertificateEntry.cert_data}. 
@@ -249,7 +249,7 @@ struct {
 При выработке подписи используется личный ключ отправителя сообщения.
 
 Сервер должен отправлять \token{CertificateVerify} при аутентификации по 
-сертификату, после сообщения \token[HS.CT]{Certificate}.
+сертификату после сообщения \token[HS.CT]{Certificate}.
 %
 Клиент должен отправлять \token{CertificateVerify} при аутентификации по 
 сертификату, если сертификат указан в \token[HS.CT]{Certificate} (список 
