@@ -1,9 +1,8 @@
-FROM python:3.9
+FROM python:3.12
 
 #RUN apt-get update
 RUN pip install flask
 RUN apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get install cmake -y -q
 
 RUN apt-get install -y -q \
 	wget \
@@ -12,16 +11,17 @@ RUN apt-get install -y -q \
 	vim \
 	nano \
 	iptables \
-	build-essential
+	build-essential \
+	cmake
 
-COPY ./openssl.sh ./
 ENV HOME /root
-# WORKDIR $HOME
+WORKDIR $HOME
 
 RUN git clone https://github.com/bcrypto/bee2evp.git
-# WORKDIR $HOME/bee2evp/doc
-# RUN bash build.sh
-RUN bash ./openssl.sh
+WORKDIR $HOME/bee2evp
+RUN ls -lah /
+RUN BEE2EVP_INSTALL_DIR=/opt/usr/local bash scripts/build.sh -s -b -t openssl-3.3.1
+
 ENV PREFIX $HOME/bee2evp/build/local
 ENV LD_LIBRARY_PATH "${PREFIX}/lib:${LD_LIBRARY_PATH:-}"
 ENV PATH ${PREFIX}/bin:${PATH}
