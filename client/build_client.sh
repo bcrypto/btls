@@ -4,9 +4,9 @@ libglib2.0-dev libproxy-dev \
 gsettings-desktop-schemas-dev ca-certificates -y
 
 git clone https://github.com/bcrypto/bee2evp.git
-cd bee2evp/test
-bash ./build.sh
-cd ../..
+cd bee2evp
+bash scripts/build.sh -s -b -t openssl-3.3.1
+cd ..
 
 export PREFIX=${PWD}/bee2evp/build/local
 export PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig:$PKG_CONFIG_PATH
