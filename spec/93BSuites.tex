@@ -520,7 +520,7 @@ Change~Cipher~Spec и Alert не уточняются, в этом
 \subsection{Сообщение сервера \lstinline{Certificate}}\label{BSUITES.4.3}
 
 Сообщение сервера \lstinline{Certificate} высылается при использовании любого из 
-алгоритмов DHT\_BIGN, DHE\_BIGN, DHT\_PSK\_BSUITES. Содержание сообщения было 
+алгоритмов DHT\_BIGN, DHE\_BIGN, DHT\_PSK\_BIGN. Содержание сообщения было 
 определено при описании алгоритмов. 
 
 \subsection{Сообщение \lstinline{ServerKeyExchange}}\label{BSUITES.4.4}
@@ -528,7 +528,7 @@ Change~Cipher~Spec и Alert не уточняются, в этом
 Сообщение \lstinline{ServerKeyExchange} обязательно высылается при использовании 
 алгоритмов DHE\_BIGN, DHE\_PSK\_BIGN может высылаться при использовании 
 алгоритма DHT\_PSK\_BIGN и не высылается при использовании алгоритма 
-DHT\_BSUITES. Содержание сообщения было определено при описании алгоритмов. 
+DHT\_BIGN. Содержание сообщения было определено при описании алгоритмов. 
 
 Формат сообщения \lstinline{ServerKeyExchange} определяется следующим образом:
 \begin{lstlisting}
@@ -593,7 +593,7 @@ enum {dhe_bign, dhe_psk_bign, dht_psk_bign} KeyExchangeAlgorithm;
 \lstinline{dhe_psk_bign}~--- используется алгоритм DHE\_PSK\_BIGN;
 
 \item[--]
-\lstinline{dht_psk_bign}~--- используется алгоритм DHT\_PSK\_BSUITES.
+\lstinline{dht_psk_bign}~--- используется алгоритм DHT\_PSK\_BIGN.
 \end{itemize}
 
 \subsection{Сообщение \lstinline{CertificateRequest}}\label{BSUITES.4.5} 
@@ -636,7 +636,7 @@ enum {dhe_bign, dhe_psk_bign, dht_psk_bign} KeyExchangeAlgorithm;
 
 Сообщение \lstinline{ClientKeyExchange} обязательно высылается при 
 использовании любого из алгоритмов DHE\_BIGN, DHT\_BIGN, DHE\_PSK\_BIGN и 
-DHT\_PSK\_BSUITES. Содержание сообщения было определено при описании 
+DHT\_PSK\_BIGN. Содержание сообщения было определено при описании 
 алгоритмов.  
 
 Формат сообщения \lstinline{ClientKeyExchange} определяется следующим образом:
@@ -684,7 +684,7 @@ KeyExchangeAlgorithm += {dht_bign};
 Дополнительный элемент перечисления означает следующее:
 \begin{itemize}
 \item[--]
-\lstinline{dht_bign}~--- используется алгоритм DHT\_BSUITES.
+\lstinline{dht_bign}~--- используется алгоритм DHT\_BIGN.
 \end{itemize}
 
 \subsection{Сообщения \lstinline{CertificateVerify, Finished}}\label{BSUITES.4.9}
