@@ -14,19 +14,19 @@ RUN apt-get install -y -q \
 	patch \
 	cmake
 
-COPY ./nginx.sh ./
-COPY ./index.html /etc/nginx/html/index.html
-COPY ./priv256.key /etc/nginx/ssl/priv256.key
-COPY ./cert256.pem /etc/nginx/ssl/cert256.pem
-COPY ./nginx.conf /etc/nginx/nginx.conf
 ENV HOME /root
 WORKDIR $HOME
 
 RUN git clone https://github.com/bcrypto/bee2evp.git
 WORKDIR $HOME/bee2evp
-RUN BEE2EVP_INSTALL_DIR=/opt/usr/local bash scripts/build.sh -s -b -t openssl-3.3.1
+RUN BEE2EVP_INSTALL_DIR=/opt/usr/local bash scripts/build.sh -s -b openssl-3.5.5
 
 WORKDIR '/'
+COPY ./nginx.sh ./
+COPY ./index.html /etc/nginx/html/index.html
+COPY ./priv256.key /etc/nginx/ssl/priv.key
+COPY ./cert256.pem /etc/nginx/ssl/cert.pem
+COPY ./nginx.conf /etc/nginx/nginx.conf
 RUN bash ./nginx.sh
 
 WORKDIR $HOME
@@ -38,4 +38,5 @@ EXPOSE 8443
 EXPOSE 8444
 EXPOSE 8445
 EXPOSE 8446
-
+EXPOSE 8447
+EXPOSE 8448
