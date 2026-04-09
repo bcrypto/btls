@@ -19,7 +19,7 @@ WORKDIR $HOME
 
 RUN git clone https://github.com/bcrypto/bee2evp.git
 WORKDIR $HOME/bee2evp
-RUN BEE2EVP_INSTALL_DIR=/opt/usr/local bash scripts/build.sh -s -b openssl-3.3.1
+RUN BEE2EVP_INSTALL_DIR=/opt/usr/local bash scripts/build.sh -s -b openssl-3.5.5
 
 WORKDIR '/'
 COPY ./nginx.sh ./
