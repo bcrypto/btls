@@ -5,7 +5,7 @@ gsettings-desktop-schemas-dev ca-certificates -y
 
 git clone https://github.com/bcrypto/bee2evp.git
 cd bee2evp
-bash scripts/build.sh -s -b openssl-3.5.5
+bash scripts/build.sh -s -b openssl-3.5.6
 cd ..
 
 export PREFIX=${PWD}/bee2evp/build/local
