@@ -27,4 +27,4 @@ which openssl
 meson --prefix=${PREFIX} -Dopenssl=enabled -Dgnutls=disabled ..
 ninja
 ninja install
-ln -s /etc/ssl/certs $PREFIX/certs 
+ln -s /etc/ssl/certs $PREFIX 
