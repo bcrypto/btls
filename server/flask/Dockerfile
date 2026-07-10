@@ -19,7 +19,7 @@ WORKDIR $HOME
 RUN git clone https://github.com/bcrypto/bee2evp.git
 WORKDIR $HOME/bee2evp
 RUN ls -lah /
-RUN BEE2EVP_INSTALL_DIR=/opt/usr/local bash scripts/build.sh -s -b -t openssl-3.5.6
+RUN BEE2EVP_INSTALL_DIR=/opt/usr/local bash scripts/build.sh -s -b openssl-3.5.6
 
 ENV PREFIX $HOME/bee2evp/build/local
 ENV LD_LIBRARY_PATH "${PREFIX}/lib:${LD_LIBRARY_PATH:-}"
