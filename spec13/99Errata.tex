@@ -1,0 +1,55 @@
+\clearpage
+\chapter*{\mbox{}\hfill Поправка к официальной редакции\footnote{
+Синим цветом выделены корректировки, пока не принятые официально.
+}\hfill\mbox{}}
+
+{\small
+\begin{center}
+\begin{longtable}{|p{2.8cm}|p{6.4cm}|p{6.4cm}|}
+\hline
+В каком месте & Напечатано & Должно быть\\
+\hline
+\hline
+\addendum{Приложение~\ref{BSUITES},}\par
+\addendum{таблица~\ref{Table.BSUITES.Suites},}\par
+\addendum{вторая колонка}
+&
+\{255, 29\}\par
+\{255, 30\}
+&
+\{0, 114\}\par
+\{0, 115\}
+\\
+\hline
+\addendum{Приложение~\ref{BSUITES},}\par
+\addendum{пункт~\ref{BSUITES.Groups},}\par
+\addendum{абзац 2}
+&
+\code|bign_curve256v1(0xFE01),|\par
+\code|bign_curve384v1(0xFE02),|\par
+\code|bign_curve512v1(0xFE03)|
+&
+\code|bign_curve256v1(42),|\par
+\code|bign_curve384v1(43),|\par
+\code|bign_curve512v1(44)|
+\\
+\hline
+\addendum{Приложение~\ref{BSUITES},}\par
+\addendum{пункт~\ref{BSUITES.DS},}\par
+\addendum{абзац 3}
+&
+\code|bign_with_hbelt(0xFE01),|\par
+\code|bign_with_bash384(0xFE02),|\par
+\code|bign_with_bash512(0xFE03)|
+&
+\code|bign_with_hbelt(0x0710),|\par
+\code|bign_with_bash384(0x0711),|\par
+\code|bign_with_bash512(0x0712)|
+\\
+\hline
+\end{longtable}
+\end{center}
+}
+
+\thispagestyle{headings}
+

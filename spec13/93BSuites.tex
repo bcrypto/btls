@@ -6,7 +6,7 @@
 \hiddensection{Назначение}\label{BSUITES.Intro}
 
 В настоящем приложении определяются правила использования в TLS 
-криптографических алгоритмов, установленных в стандартах серии СТБ~34.101.  
+криптографических алгоритмов, установленных в стандартах серии СТБ~34.101.
 %
 Правила касаются криптонаборов (см. раздел~\ref{BSUITES.Suites}), 
 протокола Диффи~--- Хеллмана (см. раздел~\ref{BSUITES.DH}),  
@@ -41,9 +41,9 @@
 Идентификатор\\
 \hline
 \hline
-\code|TLS_BELT_CHE256_BELT_HASH| & \{255, 29\}\\
+\code|TLS_BELT_CHE256_BELT_HASH| & \{0, 114\}\\
 \hline
-\code|TLS_BASH_PRG_AE2561_BASH256| & \{255, 30\}\\
+\code|TLS_BASH_PRG_AE2561_BASH256| & \{0, 115\}\\
 \hline
 \end{tabular}
 \end{table}
@@ -177,9 +177,9 @@ $V$~--- одноразовый открытый ключ противополо�
 (см.~\ref{HS.Ext.sg}):
 \begin{codeblock}
 NamedGroup += {
-  bign_curve256v1(0xFE01),
-  bign_curve384v1(0xFE02),
-  bign_curve512v1(0xFE03)
+  bign_curve256v1(42),
+  bign_curve384v1(43),
+  bign_curve512v1(44)
 };
 \end{codeblock}
 
@@ -212,9 +212,9 @@ NamedGroup += {
 (см.~\ref{HS.Ext.sa}):
 \begin{codeblock}
 SignatureScheme += {
-  bign_with_hbelt(0xFE01),
-  bign_with_bash384(0xFE02),
-  bign_with_bash512(0xFE03)
+  bign_with_hbelt(0x0710),
+  bign_with_bash384(0x0711),
+  bign_with_bash512(0x0712)
 };
 \end{codeblock}
 
