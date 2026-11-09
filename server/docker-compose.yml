@@ -46,6 +46,8 @@ services:
       - "8444:8444"
       - "8445:8445"
       - "8446:8446"
+      - "8447:8447"
+      - "8448:8448"
     command: tail -f /dev/null
     networks:
       back:
@@ -67,6 +69,8 @@ services:
       - "8444:8444"
       - "8445:8445"
       - "8446:8446"
+      - "8447:8447"
+      - "8448:8448"
     command: tail -f /dev/null
     networks:
       back:
@@ -88,6 +92,8 @@ services:
       - "8444:8444"
       - "8445:8445"
       - "8446:8446"
+      - "8447:8447"
+      - "8448:8448"
     command: tail -f /dev/null
     networks:
       back:
